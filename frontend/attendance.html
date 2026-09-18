@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .attendance-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .attendance-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .attendance-header h1 { font-size: 1.5em; margin-bottom: 5px; }
+        .attendance-header p { opacity: 0.8; font-size: 0.9em; }
+
+        .nav-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding: 15px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
+        .nav-bar a { padding: 8px 16px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.85em; transition: all 0.2s; }
+        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
+
+        .scanner-section { background: #1e1e2e; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .scanner-section h2 { color: #00b894; margin-bottom: 15px; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 8px; overflow: hidden; }
+        .btn-scan { padding: 12px 30px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin: 10px 5px; transition: transform 0.2s; }
+        .btn-scan:hover { transform: scale(1.05); }
+        .btn-stop { padding: 12px 30px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin: 10px 5px; }
+
+        .manual-section { background: #1e1e2e; padding: 25px; border-radius: 12px; margin-bottom: 20px; }
+        .manual-section h2 { color: #00b894; margin-bottom: 15px; text-align: center; }
+        .manual-form { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .manual-form select { padding: 10px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; min-width: 200px; }
+        .manual-form button { padding: 10px 20px; background: #00b894; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .result-box { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; text-align: center; }
+        .result-box.success { background: #00b89433; color: #00b894; border: 1px solid #00b894; display: block; }
+        .result-box.error { background: #ff6b6b33; color: #ff6b6b; border: 1px solid #ff6b6b; display: block; }
+        .result-box.info { background: #74b9ff33; color: #74b9ff; border: 1px solid #74b9ff; display: block; }
+
+        .today-records { background: #1e1e2e; padding: 20px; border-radius: 12px; }
+        .today-records h2 { color: #00b894; margin-bottom: 15px; text-align: center; }
+        .records-table { width: 100%; border-collapse: collapse; }
+        .records-table th { background: #16213e; color: #00b894; padding: 10px 15px; text-align: left; font-size: 0.85em; }
+        .records-table td { padding: 10px 15px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.85em; }
+        .records-table tr:hover { background: #2a2a3e; }
+    </style>
+</head>
+<body>
+    <div class="attendance-container">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="students.html">Students</a>
+            <a href="attendance.html" class="active">Scan QR</a>
+            <a href="sf2-report.html">SF2 Report</a>
+            <a href="sms-logs.html">SMS Logs</a>
+            <a href="manage-users.html">Manage Users</a>
+            <a href="index.html" onclick="localStorage.clear()">Logout</a>
+        </div>
+
+        <!-- Header -->
+        <div class="attendance-header">
+            <h1>QR Code Scanner</h1>
+            <p>Scan student QR codes to record attendance</p>
+        </div>
+
+        <!-- Scanner -->
+        <div class="scanner-section">
+            <h2>Camera Scanner</h2>
+            <div id="reader"></div>
+            <div style="margin-top: 15px;">
+                <button class="btn-scan" id="startBtn" onclick="startScanner()">Start Camera</button>
+                <button class="btn-stop" id="stopBtn" onclick="stopScanner()" style="display:none;">Stop Camera</button>
+            </div>
+            <div class="result-box" id="scanResult"></div>
+        </div>
+
+        <!-- Manual Entry -->
+        <div class="manual-section">
+            <h2>Manual Attendance Entry</h2>
+            <div class="manual-form">
+                <select id="studentSelect">
+                    <option value="">-- Select Student --</option>
+                </select>
+                <select id="statusSelect">
+                    <option value="Present">Present</option>
+                    <option value="Late">Late</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Excused">Excused</option>
+                </select>
+                <button onclick="manualAttendance()">Record</button>
+            </div>
+            <div class="result-box" id="manualResult"></div>
+        </div>
+
+        <!-- Today's Records -->
+        <div class="today-records">
+            <h2>Today's Attendance Records</h2>
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
+                        <th>Time In</th>
+                    </tr>
+                </thead>
+                <tbody id="todayRecords">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">No records yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'index.html';
+
+        let html5QrCode = null;
+        let isScanning = false;
+
+        // Load students for manual entry
+        async function loadStudentOptions() {
+            try {
+                const response = await fetch('/api/students', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const students = await response.json();
+                const select = document.getElementById('studentSelect');
+                students.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s.first_name + ' ' + s.last_name;
+                    option.textContent = `${s.last_name}, ${s.first_name} (${s.gender})`;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Load students error:', err);
+            }
+        }
+
+        // Start Camera Scanner
+        async function startScanner() {
+            try {
+                html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess,
+                    onScanFailure
+                );
+                isScanning = true;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                showResult('scanResult', 'Camera active. Point at a QR code.', 'info');
+            } catch (err) {
+                console.error('Camera error:', err);
+                showResult('scanResult', 'Camera access denied or not available. Please allow camera permission.', 'error');
+            }
+        }
+
+        function stopScanner() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('startBtn').style.display = 'inline-block';
+                    document.getElementById('stopBtn').style.display = 'none';
+                    showResult('scanResult', 'Camera stopped.', 'info');
+                });
+            }
+        }
+
+        async function onScanSuccess(decodedText) {
+            if (!isScanning) return;
+            // Pause scanning briefly
+            isScanning = false;
+            await recordAttendance(decodedText, 'scanResult');
+            setTimeout(() => { isScanning = true; }, 3000);
+        }
+
+        function onScanFailure(error) {
+            // Ignore scan failures (no QR in frame)
+        }
+
+        // Record Attendance
+        async function recordAttendance(studentName, resultId) {
+            try {
+                const response = await fetch('/api/attendance/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ qr_data: studentName, status: 'Present' })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(resultId, `${studentName} - Attendance recorded! (${data.status || 'Present'})`, 'success');
+                    loadTodayRecords();
+                } else {
+                    showResult(resultId, data.error || 'Failed to record attendance.', 'error');
+                }
+            } catch (err) {
+                showResult(resultId, 'Server error. Check connection.', 'error');
+            }
+        }
+
+        // Manual Attendance
+        async function manualAttendance() {
+            const studentName = document.getElementById('studentSelect').value;
+            const status = document.getElementById('statusSelect').value;
+
+            if (!studentName) {
+                showResult('manualResult', 'Please select a student.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/attendance/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ qr_data: studentName, status })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('manualResult', `${studentName} marked as ${status}!`, 'success');
+                    loadTodayRecords();
+                } else {
+                    showResult('manualResult', data.error || 'Failed to record.', 'error');
+                }
+            } catch (err) {
+                showResult('manualResult', 'Server error. Check connection.', 'error');
+            }
+        }
+
+        // Load Today's Records
+        async function loadTodayRecords() {
+            try {
+                const response = await fetch('/api/attendance/today', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed');
+                const records = await response.json();
+
+                const tbody = document.getElementById('todayRecords');
+                if (records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No records yet. Start scanning!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = records.map((r, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${r.student_name || r.last_name + ', ' + r.first_name}</td>
+                        <td style="color:${r.status === 'Present' ? '#00b894' : r.status === 'Late' ? '#ffd93d' : '#ff6b6b'}; font-weight:bold;">${r.status}</td>
+                        <td>${r.time_in || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Today records error:', err);
+            }
+        }
+
+        function showResult(id, message, type) {
+            const div = document.getElementById(id);
+            div.textContent = message;
+            div.className = `result-box ${type}`;
+            if (type !== 'info') {
+                setTimeout(() => { div.className = 'result-box'; div.style.display = 'none'; }, 5000);
+            }
+        }
+
+        loadStudentOptions();
+        loadTodayRecords();
+    </script>
+</body>
+</html>
+

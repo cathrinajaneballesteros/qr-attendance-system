@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #0a0a1a, #1a1a2e, #16213e); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .login-container { background: #1e1e2e; padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); width: 100%; max-width: 400px; text-align: center; }
+        .login-container h1 { color: #00b894; font-size: 1.8em; margin-bottom: 5px; }
+        .login-container .subtitle { color: #888; font-size: 0.85em; margin-bottom: 5px; }
+        .login-container .school-name { color: #ccc; font-size: 0.95em; font-weight: bold; margin-bottom: 3px; }
+        .login-container .section-info { color: #00b894; font-size: 0.85em; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { color: #ccc; font-size: 0.85em; display: block; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.95em; box-sizing: border-box; }
+        .form-group input:focus { border-color: #00b894; outline: none; }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin-top: 10px; transition: transform 0.2s; }
+        .btn-login:hover { transform: scale(1.02); }
+        .error-msg { color: #ff6b6b; font-size: 0.85em; margin-top: 10px; display: none; }
+        .default-accounts { margin-top: 20px; padding: 15px; background: #2a2a3e; border-radius: 8px; text-align: left; }
+        .default-accounts p { color: #888; font-size: 0.8em; margin: 3px 0; }
+        .default-accounts .title { color: #ccc; font-size: 0.85em; font-weight: bold; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>QR<span style="color:#ff6b6b;">Attend</span></h1>
+        <p class="subtitle">QR Attendance System with Parent Notification</p>
+        <p class="school-name">Sta. Rosa Elementary School</p>
+        <p class="section-info">Grade 6 - Great Geniuses | S.Y. 2025-2026</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Enter username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn-login">Sign In</button>
+            <p class="error-msg" id="errorMsg"></p>
+        </form>
+
+        <div class="default-accounts">
+            <p class="title">Default Accounts:</p>
+            <p>Admin: admin / admin123</p>
+            <p>Teacher: teacher / teacher123</p>
+        </div>
+    </div>
+
+    <script>
+        if (localStorage.getItem('token')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorMsg.textContent = data.error || 'Invalid username or password.';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Connection error. Is the server running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

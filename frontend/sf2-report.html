@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF2 Report - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .sf2-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .sf2-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .sf2-header h1 { font-size: 1.5em; margin-bottom: 5px; }
+        .sf2-header p { opacity: 0.8; font-size: 0.9em; }
+        .sf2-controls { display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; padding: 20px; background: #1e1e2e; border-radius: 12px; }
+        .sf2-controls label { color: #ccc; font-size: 0.9em; }
+        .sf2-controls select, .sf2-controls input { padding: 10px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
+        .btn-generate { padding: 10px 25px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; }
+        .btn-generate:hover { transform: scale(1.05); }
+        .btn-download { padding: 10px 25px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; }
+        .btn-download:hover { transform: scale(1.05); }
+
+        .sf2-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; padding: 15px; background: #1e1e2e; border-radius: 10px; }
+        .sf2-info-item { display: flex; justify-content: space-between; padding: 8px 12px; background: #2a2a3e; border-radius: 6px; }
+        .sf2-info-item .label { color: #888; font-size: 0.85em; }
+        .sf2-info-item .value { color: #00b894; font-weight: bold; font-size: 0.85em; }
+
+        .sf2-table-wrapper { overflow-x: auto; margin-bottom: 20px; border-radius: 10px; }
+        .sf2-table { width: 100%; border-collapse: collapse; font-size: 0.75em; background: #1e1e2e; }
+        .sf2-table th { background: #16213e; color: #00b894; padding: 8px 4px; border: 1px solid #333; text-align: center; position: sticky; top: 0; z-index: 1; }
+        .sf2-table td { padding: 6px 4px; border: 1px solid #333; text-align: center; color: #ddd; }
+        .sf2-table tr:hover { background: #2a2a3e; }
+        .sf2-table .student-name { text-align: left; padding-left: 10px; white-space: nowrap; min-width: 200px; }
+        .sf2-table .present { color: #00b894; }
+        .sf2-table .absent { color: #ff6b6b; font-weight: bold; }
+        .sf2-table .late { color: #ffd93d; }
+        .sf2-table .total-row { background: #16213e; font-weight: bold; }
+        .sf2-table .total-row td { color: #00b894; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px; }
+        .summary-card { background: #1e1e2e; padding: 15px; border-radius: 10px; text-align: center; }
+        .summary-card .number { font-size: 1.8em; font-weight: bold; color: #00b894; }
+        .summary-card .label { color: #888; font-size: 0.85em; margin-top: 5px; }
+        .summary-card.male .number { color: #74b9ff; }
+        .summary-card.female .number { color: #fd79a8; }
+        .summary-card.absent .number { color: #ff6b6b; }
+
+        .signatures { display: flex; justify-content: space-between; margin-top: 30px; padding: 20px; background: #1e1e2e; border-radius: 10px; }
+        .signature-block { text-align: center; }
+        .signature-block .name { font-weight: bold; color: white; border-bottom: 2px solid #00b894; padding-bottom: 5px; margin-bottom: 5px; }
+        .signature-block .title { color: #888; font-size: 0.85em; }
+
+        .nav-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding: 15px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
+        .nav-bar a { padding: 8px 16px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.85em; transition: all 0.2s; }
+        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
+
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .loading .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #00b894; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .no-data { text-align: center; padding: 40px; color: #888; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+    <div class="sf2-container">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="students.html">Students</a>
+            <a href="attendance.html">Scan QR</a>
+            <a href="sf2-report.html" class="active">SF2 Report</a>
+            <a href="sms-logs.html">SMS Logs</a>
+            <a href="manage-users.html">Manage Users</a>
+            <a href="index.html" onclick="localStorage.clear()">Logout</a>
+        </div>
+
+        <!-- Header -->
+        <div class="sf2-header">
+            <h1>School Form 2 (SF2)</h1>
+            <p>Daily Attendance Report of Learners</p>
+            <p style="font-size: 0.8em; opacity: 0.6;">(This replaces Form 1, Form 2 & STS Form 4 - Absenteeism and Dropout Profile)</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="sf2-controls">
+            <div>
+                <label>Year:</label>
+                <select id="sf2Year">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+            <div>
+                <label>Month:</label>
+                <select id="sf2Month">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9" selected>September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <button class="btn-generate" onclick="generateReport()">Generate Report</button>
+            <button class="btn-download" onclick="downloadSF2Excel()">Download Excel (.xlsx)</button>
+        </div>
+
+        <!-- School Info -->
+        <div class="sf2-info" id="schoolInfo" style="display:none;">
+            <div class="sf2-info-item"><span class="label">School ID:</span><span class="value" id="infoSchoolId">102056</span></div>
+            <div class="sf2-info-item"><span class="label">School:</span><span class="value" id="infoSchool">Sta. Rosa ES</span></div>
+            <div class="sf2-info-item"><span class="label">Grade Level:</span><span class="value" id="infoGrade">Grade 6</span></div>
+            <div class="sf2-info-item"><span class="label">Section:</span><span class="value" id="infoSection">Great Geniuses</span></div>
+            <div class="sf2-info-item"><span class="label">School Year:</span><span class="value" id="infoSY">2026-2027</span></div>
+            <div class="sf2-info-item"><span class="label">Month:</span><span class="value" id="infoMonth">September</span></div>
+            <div class="sf2-info-item"><span class="label">School Days:</span><span class="value" id="infoSchoolDays">0</span></div>
+            <div class="sf2-info-item"><span class="label">Enrollment:</span><span class="value" id="infoEnrollment">0</span></div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingDiv" style="display:none;">
+            <div class="spinner"></div>
+            <p>Generating SF2 Report...</p>
+        </div>
+
+        <!-- No Data -->
+        <div class="no-data" id="noDataDiv">
+            <p>Select a month and click <strong>"Generate Report"</strong> to view the SF2 attendance report.</p>
+        </div>
+
+        <!-- Report Table -->
+        <div id="reportContent" style="display:none;">
+            <!-- Male Students -->
+            <h3 style="color:#74b9ff; margin: 15px 0 5px 0;">MALE STUDENTS</h3>
+            <div class="sf2-table-wrapper">
+                <table class="sf2-table" id="maleTable">
+                    <thead id="maleTableHead"></thead>
+                    <tbody id="maleTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Female Students -->
+            <h3 style="color:#fd79a8; margin: 15px 0 5px 0;">FEMALE STUDENTS</h3>
+            <div class="sf2-table-wrapper">
+                <table class="sf2-table" id="femaleTable">
+                    <thead id="femaleTableHead"></thead>
+                    <tbody id="femaleTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Summary Cards -->
+            <h3 style="color:#00b894; margin: 20px 0 10px 0;">SUMMARY FOR THE MONTH</h3>
+            <div class="summary-grid" id="summaryGrid"></div>
+
+            <!-- Signatures -->
+            <div class="signatures">
+                <div class="signature-block">
+                    <p style="color:#888; font-size:0.85em;">Prepared by:</p>
+                    <p class="name">TIFANNY MARTIN ARAGON</p>
+                    <p class="title">Class Adviser</p>
+                </div>
+                <div class="signature-block">
+                    <p style="color:#888; font-size:0.85em;">Certified Correct:</p>
+                    <p class="name">MC RIZ TEMPLETON BUEN</p>
+                    <p class="title">School Head</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'index.html';
+
+        async function generateReport() {
+            const year = document.getElementById('sf2Year').value;
+            const month = document.getElementById('sf2Month').value;
+
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('noDataDiv').style.display = 'none';
+            document.getElementById('reportContent').style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/sf2/report/${year}/${month}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch report');
+                const data = await response.json();
+
+                document.getElementById('loadingDiv').style.display = 'none';
+
+                if (!data.male_students && !data.female_students) {
+                    document.getElementById('noDataDiv').style.display = 'block';
+                    document.getElementById('noDataDiv').innerHTML = '<p>No attendance data found for this month.</p>';
+                    return;
+                }
+
+                document.getElementById('schoolInfo').style.display = 'grid';
+                document.getElementById('infoSchoolId').textContent = data.school_id;
+                document.getElementById('infoSchool').textContent = data.school;
+                document.getElementById('infoGrade').textContent = data.grade_level;
+                document.getElementById('infoSection').textContent = data.section;
+                document.getElementById('infoSY').textContent = data.school_year;
+                document.getElementById('infoMonth').textContent = data.month;
+                document.getElementById('infoSchoolDays').textContent = data.school_days ? data.school_days.length : 0;
+                document.getElementById('infoEnrollment').textContent = data.summary.total_enrollment;
+
+                const schoolDays = data.school_days || [];
+
+                function buildTableHead(theadId) {
+                    const thead = document.getElementById(theadId);
+                    let headerRow1 = '<tr><th rowspan="2">No.</th><th rowspan="2">NAME<br>(Last Name, First Name, Middle Name)</th>';
+                    let headerRow2 = '<tr>';
+
+                    schoolDays.forEach(day => {
+                        headerRow1 += `<th>${day}</th>`;
+                    });
+                    headerRow1 += '<th rowspan="2">ABSENT</th><th rowspan="2">PRESENT</th><th rowspan="2">%</th></tr>';
+
+                    const dayLabels = ['SU','M','T','W','TH','F','SA'];
+                    schoolDays.forEach(day => {
+                        const date = new Date(parseInt(year), parseInt(month) - 1, day);
+                        headerRow2 += `<th style="font-size:0.8em;">${dayLabels[date.getDay()]}</th>`;
+                    });
+                    headerRow2 += '</tr>';
+
+                    thead.innerHTML = headerRow1 + headerRow2;
+                }
+
+                buildTableHead('maleTableHead');
+                buildTableHead('femaleTableHead');
+
+                function buildStudentRows(students, tbodyId, gender) {
+                    const tbody = document.getElementById(tbodyId);
+                    let html = '';
+                    let totalPresent = 0, totalAbsent = 0;
+                    const dailyTotals = {};
+
+                    students.forEach((student, index) => {
+                        html += `<tr><td>${index + 1}</td><td class="student-name">${student.name}</td>`;
+                        schoolDays.forEach(day => {
+                            const status = student.daily[day];
+                            if (status === '✓' || status === 'P') {
+                                html += `<td class="present">P</td>`;
+                                dailyTotals[day] = (dailyTotals[day] || 0) + 1;
+                            } else if (status === 'L') {
+                                html += `<td class="late">L</td>`;
+                                dailyTotals[day] = (dailyTotals[day] || 0) + 1;
+                            } else if (status === '✗' || status === 'A') {
+                                html += `<td class="absent">A</td>`;
+                            } else if (status === 'E') {
+                                html += `<td style="color:#ffd93d;">E</td>`;
+                            } else {
+                                html += `<td>-</td>`;
+                            }
+                        });
+                        html += `<td class="absent">${student.total_absent}</td>`;
+                        html += `<td class="present">${student.total_present}</td>`;
+                        html += `<td>${student.attendance_rate}%</td></tr>`;
+                        totalPresent += student.total_present;
+                        totalAbsent += student.total_absent;
+                    });
+
+                    const color = gender === 'Male' ? '#74b9ff' : '#fd79a8';
+                    html += `<tr class="total-row"><td>${students.length}</td><td class="student-name" style="color:${color};"><=== ${gender.toUpperCase()} | TOTAL Per Day ===></td>`;
+                    schoolDays.forEach(day => {
+                        html += `<td>${dailyTotals[day] || 0}</td>`;
+                    });
+                    html += `<td class="absent">${totalAbsent}</td>`;
+                    html += `<td class="present">${totalPresent}</td>`;
+                    const rate = (totalPresent + totalAbsent) > 0 ? ((totalPresent / (totalPresent + totalAbsent)) * 100).toFixed(1) : '0.0';
+                    html += `<td>${rate}%</td></tr>`;
+
+                    tbody.innerHTML = html;
+                }
+
+                buildStudentRows(data.male_students, 'maleTableBody', 'Male');
+                buildStudentRows(data.female_students, 'femaleTableBody', 'Female');
+
+                const s = data.summary;
+                const totalSchoolDays = schoolDays.length;
+                const overallRate = (s.total_enrollment * totalSchoolDays) > 0
+                    ? ((s.overall_present / (s.total_enrollment * totalSchoolDays)) * 100).toFixed(1) : '0.0';
+                const maleRate = (s.male_count * totalSchoolDays) > 0
+                    ? ((s.total_male_present / (s.male_count * totalSchoolDays)) * 100).toFixed(1) : '0.0';
+                const femaleRate = (s.female_count * totalSchoolDays) > 0
+                    ? ((s.total_female_present / (s.female_count * totalSchoolDays)) * 100).toFixed(1) : '0.0';
+
+                document.getElementById('summaryGrid').innerHTML = `
+                    <div class="summary-card"><div class="number">${s.total_enrollment}</div><div class="label">Total Enrollment</div></div>
+                    <div class="summary-card male"><div class="number">${s.male_count}</div><div class="label">Male Students</div></div>
+                    <div class="summary-card female"><div class="number">${s.female_count}</div><div class="label">Female Students</div></div>
+                    <div class="summary-card"><div class="number">${totalSchoolDays}</div><div class="label">School Days</div></div>
+                    <div class="summary-card"><div class="number">${s.overall_present}</div><div class="label">Total Present (Days)</div></div>
+                    <div class="summary-card absent"><div class="number">${s.overall_absent}</div><div class="label">Total Absent (Days)</div></div>
+                    <div class="summary-card male"><div class="number">${s.total_male_present}</div><div class="label">Male Present (Days)</div></div>
+                    <div class="summary-card female"><div class="number">${s.total_female_present}</div><div class="label">Female Present (Days)</div></div>
+                    <div class="summary-card"><div class="number">${overallRate}%</div><div class="label">Overall Attendance Rate</div></div>
+                    <div class="summary-card male"><div class="number">${maleRate}%</div><div class="label">Male Attendance Rate</div></div>
+                    <div class="summary-card female"><div class="number">${femaleRate}%</div><div class="label">Female Attendance Rate</div></div>
+                    <div class="summary-card"><div class="number">0</div><div class="label">Dropped Out</div></div>
+                `;
+
+                document.getElementById('reportContent').style.display = 'block';
+
+            } catch (err) {
+                console.error('SF2 Report error:', err);
+                document.getElementById('loadingDiv').style.display = 'none';
+                document.getElementById('noDataDiv').style.display = 'block';
+                document.getElementById('noDataDiv').innerHTML = `<p style="color:#ff6b6b;">Error generating report: ${err.message}</p>`;
+            }
+        }
+
+        async function downloadSF2Excel() {
+            const year = document.getElementById('sf2Year').value;
+            const month = document.getElementById('sf2Month').value;
+            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            try {
+                const response = await fetch(`/api/sf2/download/${year}/${month}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to download report');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `SF2_${year}_${monthNames[parseInt(month) - 1]}_Grade6_GreatGeniuses.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Failed to download SF2 report. Make sure the server is running and try generating the report first.');
+            }
+        }
+    </script>
+</body>
+</html>
+

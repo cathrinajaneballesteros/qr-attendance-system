@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Logs - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .sms-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .sms-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .sms-header h1 { font-size: 1.5em; margin-bottom: 5px; }
+        .sms-header p { opacity: 0.8; font-size: 0.9em; }
+
+        .nav-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding: 15px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
+        .nav-bar a { padding: 8px 16px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.85em; transition: all 0.2s; }
+        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
+
+        .sms-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .sms-stat { background: #1e1e2e; padding: 20px; border-radius: 12px; text-align: center; }
+        .sms-stat .number { font-size: 2em; font-weight: bold; color: #00b894; }
+        .sms-stat .label { color: #888; font-size: 0.85em; margin-top: 5px; }
+        .sms-stat.sent .number { color: #00b894; }
+        .sms-stat.failed .number { color: #ff6b6b; }
+        .sms-stat.pending .number { color: #ffd93d; }
+
+        .sms-table-wrapper { background: #1e1e2e; border-radius: 12px; overflow: hidden; }
+        .sms-table-wrapper h2 { color: #00b894; padding: 20px 20px 10px 20px; font-size: 1.1em; }
+        .sms-table { width: 100%; border-collapse: collapse; }
+        .sms-table th { background: #16213e; color: #00b894; padding: 12px 15px; text-align: left; font-size: 0.85em; }
+        .sms-table td { padding: 10px 15px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.85em; }
+        .sms-table tr:hover { background: #2a2a3e; }
+
+        .status-sent { color: #00b894; font-weight: bold; }
+        .status-failed { color: #ff6b6b; font-weight: bold; }
+        .status-pending { color: #ffd93d; font-weight: bold; }
+        .status-mock { color: #74b9ff; font-weight: bold; }
+
+        .sms-count { color: #888; font-size: 0.85em; padding: 0 20px 15px 20px; }
+        .no-logs { text-align: center; padding: 40px; color: #888; }
+
+        .provider-info { background: #2a2a3e; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .provider-info p { color: #888; font-size: 0.85em; margin: 3px 0; }
+        .provider-info .provider-name { color: #ffd93d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="sms-container">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="students.html">Students</a>
+            <a href="attendance.html">Scan QR</a>
+            <a href="sf2-report.html">SF2 Report</a>
+            <a href="sms-logs.html" class="active">SMS Logs</a>
+            <a href="manage-users.html">Manage Users</a>
+            <a href="index.html" onclick="localStorage.clear()">Logout</a>
+        </div>
+
+        <!-- Header -->
+        <div class="sms-header">
+            <h1>SMS Notification Logs</h1>
+            <p>Track all parent/guardian notifications sent</p>
+        </div>
+
+        <!-- Provider Info -->
+        <div class="provider-info">
+            <p>SMS Provider: <span class="provider-name" id="providerName">Loading...</span></p>
+            <p>SMS notifications are sent automatically when attendance is recorded.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="sms-stats">
+            <div class="sms-stat sent">
+                <div class="number" id="totalSent">0</div>
+                <div class="label">Sent</div>
+            </div>
+            <div class="sms-stat failed">
+                <div class="number" id="totalFailed">0</div>
+                <div class="label">Failed</div>
+            </div>
+            <div class="sms-stat pending">
+                <div class="number" id="totalPending">0</div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="sms-stat">
+                <div class="number" id="totalAll">0</div>
+                <div class="label">Total</div>
+            </div>
+        </div>
+
+        <!-- SMS Logs Table -->
+        <div class="sms-table-wrapper">
+            <h2>SMS Log History</h2>
+            <p class="sms-count" id="smsCount">Loading...</p>
+            <table class="sms-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Guardian</th>
+                        <th>Phone</th>
+                        <th>Message</th>
+                        <th>Status</th>
+                        <th>Date/Time</th>
+                    </tr>
+                </thead>
+                <tbody id="smsTableBody">
+                    <tr><td colspan="7" style="text-align:center; color:#888;">Loading SMS logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'index.html';
+
+        async function loadSMSLogs() {
+            try {
+                const response = await fetch('/api/sms/logs', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load SMS logs');
+                const data = await response.json();
+
+                const logs = data.logs || data || [];
+                const provider = data.provider || 'mock';
+
+                document.getElementById('providerName').textContent = provider.toUpperCase();
+
+                let sent = 0, failed = 0, pending = 0;
+                logs.forEach(log => {
+                    if (log.status === 'sent' || log.status === 'mock') sent++;
+                    else if (log.status === 'failed') failed++;
+                    else pending++;
+                });
+
+                document.getElementById('totalSent').textContent = sent;
+                document.getElementById('totalFailed').textContent = failed;
+                document.getElementById('totalPending').textContent = pending;
+                document.getElementById('totalAll').textContent = logs.length;
+                document.getElementById('smsCount').textContent = `Total: ${logs.length} log(s)`;
+
+                const tbody = document.getElementById('smsTableBody');
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">No SMS logs yet. SMS will be sent when attendance is recorded.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = logs.map((log, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${log.student_name || '-'}</td>
+                        <td>${log.guardian_name || '-'}</td>
+                        <td>${log.phone || '-'}</td>
+                        <td style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${log.message || ''}">${log.message || '-'}</td>
+                        <td class="status-${log.status || 'pending'}">${(log.status || 'pending').toUpperCase()}</td>
+                        <td>${log.created_at || log.date || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('SMS logs error:', err);
+                document.getElementById('smsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ff6b6b;">Failed to load SMS logs.</td></tr>';
+            }
+        }
+
+        loadSMSLogs();
+    </script>
+</body>
+</html>
+
