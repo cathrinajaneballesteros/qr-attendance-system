@@ -9,17 +9,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
         .manage-container { max-width: 1000px; margin: 0 auto; padding: 15px; }
-
         .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
         .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
         .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
         .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
         .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
-
         .page-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
         .page-header h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
         .page-header p { color: #888; font-size: 0.85em; }
-
+        .error-banner { background: #ff6b6b22; color: #ff6b6b; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid #ff6b6b44; display: none; font-size: 0.85em; }
         .add-user-section { background: #1e1e2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
         .add-user-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
@@ -28,41 +26,27 @@
         .form-group input, .form-group select { padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
         .form-group input:focus, .form-group select:focus { border-color: #00b894; outline: none; }
         .form-group input::placeholder { color: #555; }
-
-        .btn-add { padding: 10px 25px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; }
+        .btn-add { padding: 10px 25px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
         .btn-add:hover { transform: scale(1.03); }
-        .btn-add:disabled { opacity: 0.6; pointer-events: none; }
-
+        .btn-add:disabled { opacity: 0.6; }
         .msg { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.85em; display: none; }
         .msg.success { background: #00b89422; color: #00b894; border: 1px solid #00b89444; display: block; }
         .msg.error { background: #ff6b6b22; color: #ff6b6b; border: 1px solid #ff6b6b44; display: block; }
-
         .users-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
         .users-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-wrapper { overflow-x: auto; }
         .users-table { width: 100%; border-collapse: collapse; }
         .users-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; }
         .users-table td { padding: 10px 12px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.8em; }
         .users-table tr:hover { background: #2a2a3e; }
-
         .role-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
         .role-badge.admin { background: #ff6b6b33; color: #ff6b6b; }
         .role-badge.teacher { background: #74b9ff33; color: #74b9ff; }
-
         .btn-delete { padding: 5px 12px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
         .btn-delete:hover { background: #ee5a5a; }
-
         .admin-only-msg { text-align: center; padding: 40px; color: #ff6b6b; }
-
-        @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .nav-bar a { padding: 7px 10px; font-size: 0.75em; }
-        }
-        @media (max-width: 480px) {
-            .manage-container { padding: 10px; }
-            .nav-bar { gap: 5px; padding: 10px; }
-            .nav-bar a { padding: 6px 8px; font-size: 0.7em; }
-        }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .nav-bar a { padding: 7px 10px; font-size: 0.75em; } }
+        @media (max-width: 480px) { .manage-container { padding: 10px; } .nav-bar { gap: 5px; } .nav-bar a { padding: 6px 8px; font-size: 0.7em; } }
     </style>
 </head>
 <body>
@@ -77,13 +61,14 @@
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
+        <div class="error-banner" id="errorBanner"></div>
+
         <div class="page-header">
             <h1>Manage Users</h1>
             <p>Add, view, and manage system users</p>
         </div>
 
         <div id="adminContent">
-            <!-- Add User Form -->
             <div class="add-user-section">
                 <h2>Add New User</h2>
                 <form id="addUserForm">
@@ -115,24 +100,12 @@
                 </form>
             </div>
 
-            <!-- Users List -->
             <div class="users-section">
                 <h2>All Users</h2>
                 <div class="table-wrapper">
                     <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Full Name</th>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th>Created</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <tr><td colspan="6" style="text-align:center; color:#888;">Loading users...</td></tr>
-                        </tbody>
+                        <thead><tr><th>#</th><th>Full Name</th><th>Username</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
+                        <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center; color:#888;">Loading users...</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -147,12 +120,13 @@
 
     <script>
         var token = localStorage.getItem('token');
-        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        if (!token) {
-            window.location.href = 'index.html';
-        }
+        // ONLY redirect if NO token at all
+        if (!token) { window.location.href = 'index.html'; }
 
+        // Check role - show message but do NOT redirect
         if (user.role !== 'admin') {
             document.getElementById('adminContent').style.display = 'none';
             document.getElementById('notAdminMsg').style.display = 'block';
@@ -160,34 +134,23 @@
 
         function confirmLogout(e) {
             e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            }
+            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
         }
 
-        // Load users on page load
         async function loadUsers() {
             var tbody = document.getElementById('usersTableBody');
             try {
                 var response = await fetch('/api/auth/users', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
+                // DO NOT redirect on 401 - just show error
+                if (!response.ok) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ff6b6b;">Could not load users. Server may be starting up or session expired. Try logging out and back in.</td></tr>';
                     return;
                 }
 
-                if (!response.ok) throw new Error('Failed');
-
                 var users = await response.json();
-
                 if (!users || users.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No users found.</td></tr>';
                     return;
@@ -199,10 +162,7 @@
                     var roleClass = u.role === 'admin' ? 'admin' : 'teacher';
                     var canDelete = u.id !== user.id;
                     var createdDate = '-';
-                    if (u.created_at) {
-                        try { createdDate = new Date(u.created_at).toLocaleDateString(); } catch(e) { createdDate = u.created_at; }
-                    }
-
+                    if (u.created_at) { try { createdDate = new Date(u.created_at).toLocaleDateString(); } catch(e) { createdDate = u.created_at; } }
                     html += '<tr>';
                     html += '<td>' + (i + 1) + '</td>';
                     html += '<td><strong>' + (u.full_name || '-') + '</strong></td>';
@@ -210,23 +170,16 @@
                     html += '<td><span class="role-badge ' + roleClass + '">' + (u.role || 'teacher').toUpperCase() + '</span></td>';
                     html += '<td>' + createdDate + '</td>';
                     html += '<td>';
-                    if (canDelete) {
-                        html += '<button class="btn-delete" onclick="deleteUser(' + u.id + ', \'' + u.username.replace(/'/g, "\\'") + '\')">Delete</button>';
-                    } else {
-                        html += '<span style="color:#888; font-size:0.8em;">You</span>';
-                    }
-                    html += '</td>';
-                    html += '</tr>';
+                    if (canDelete) { html += '<button class="btn-delete" onclick="deleteUser(' + u.id + ',\'' + u.username.replace(/'/g, "\\'") + '\')">Delete</button>'; }
+                    else { html += '<span style="color:#888;font-size:0.8em;">You</span>'; }
+                    html += '</td></tr>';
                 }
                 tbody.innerHTML = html;
-
             } catch (err) {
-                console.error('Load users error:', err);
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ff6b6b;">Failed to load users. Check server connection.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ff6b6b;">Connection error. Server may be starting up. Please refresh.</td></tr>';
             }
         }
 
-        // Add user
         document.getElementById('addUserForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             var fullName = document.getElementById('fullName').value.trim();
@@ -236,53 +189,19 @@
             var formMsg = document.getElementById('formMsg');
             var addBtn = document.getElementById('addBtn');
 
-            formMsg.className = 'msg';
-            formMsg.style.display = 'none';
+            formMsg.className = 'msg'; formMsg.style.display = 'none';
+            if (!fullName || !username || !password) { formMsg.textContent = 'All fields are required.'; formMsg.className = 'msg error'; return; }
+            if (password.length < 6) { formMsg.textContent = 'Password must be at least 6 characters.'; formMsg.className = 'msg error'; return; }
 
-            if (!fullName || !username || !password) {
-                formMsg.textContent = 'All fields are required.';
-                formMsg.className = 'msg error';
-                return;
-            }
-
-            if (password.length < 6) {
-                formMsg.textContent = 'Password must be at least 6 characters.';
-                formMsg.className = 'msg error';
-                return;
-            }
-
-            addBtn.disabled = true;
-            addBtn.textContent = 'Adding...';
+            addBtn.disabled = true; addBtn.textContent = 'Adding...';
 
             try {
                 var response = await fetch('/api/auth/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({
-                        full_name: fullName,
-                        username: username,
-                        password: password,
-                        role: role
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ full_name: fullName, username: username, password: password, role: role })
                 });
-
                 var data = await response.json();
-
-                if (response.status === 401 || response.status === 403) {
-                    if (data.error && data.error.indexOf('expired') !== -1) {
-                        localStorage.clear();
-                        window.location.href = 'index.html';
-                        return;
-                    }
-                    formMsg.textContent = data.error || 'Permission denied.';
-                    formMsg.className = 'msg error';
-                    addBtn.disabled = false;
-                    addBtn.textContent = 'Add User';
-                    return;
-                }
 
                 if (response.ok) {
                     formMsg.textContent = 'User "' + username + '" added successfully as ' + role + '!';
@@ -297,47 +216,24 @@
                     formMsg.className = 'msg error';
                 }
             } catch (err) {
-                formMsg.textContent = 'Connection error. Make sure the server is running.';
+                formMsg.textContent = 'Connection error. Server may be starting up.';
                 formMsg.className = 'msg error';
-                console.error('Add user error:', err);
             }
-
-            addBtn.disabled = false;
-            addBtn.textContent = 'Add User';
+            addBtn.disabled = false; addBtn.textContent = 'Add User';
         });
 
-        // Delete user
         async function deleteUser(userId, username) {
-            if (!confirm('Are you sure you want to delete user "' + username + '"?')) return;
-
+            if (!confirm('Delete user "' + username + '"?')) return;
             try {
                 var response = await fetch('/api/auth/users/' + userId, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
                 });
-
-                if (response.status === 401 || response.status === 403) {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                var data = await response.json();
-
-                if (response.ok) {
-                    loadUsers();
-                } else {
-                    alert(data.error || 'Failed to delete user.');
-                }
-            } catch (err) {
-                alert('Connection error. Make sure the server is running.');
-            }
+                if (response.ok) { loadUsers(); }
+                else { var data = await response.json(); alert(data.error || 'Failed to delete.'); }
+            } catch (err) { alert('Connection error.'); }
         }
 
-        // Load on page ready
         loadUsers();
     </script>
 </body>

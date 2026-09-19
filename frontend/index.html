@@ -6,243 +6,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>QR Attendance System - Login</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #0a0a1a, #1a1a2e, #16213e);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: #1e1e2e;
-            padding: 40px 35px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-container h1 {
-            color: #00b894;
-            font-size: 2em;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
-
-        .login-container h1 span {
-            color: #ff6b6b;
-        }
-
-        .subtitle {
-            color: #888;
-            font-size: 0.85em;
-            margin-bottom: 5px;
-        }
-
-        .school-name {
-            color: #ccc;
-            font-size: 0.95em;
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-
-        .section-info {
-            color: #00b894;
-            font-size: 0.85em;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-            text-align: left;
-        }
-
-        .form-group label {
-            color: #ccc;
-            font-size: 0.85em;
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 13px 16px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #2a2a3e;
-            color: white;
-            font-size: 0.95em;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            border-color: #00b894;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.15);
-        }
-
-        .form-group input::placeholder {
-            color: #666;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #00b894, #00cec9);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1em;
-            margin-top: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-login:hover {
-            transform: scale(1.02);
-            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.3);
-        }
-
-        .btn-login:active {
-            transform: scale(0.98);
-        }
-
-        .btn-login.loading-btn {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        .error-msg {
-            color: #ff6b6b;
-            font-size: 0.85em;
-            margin-top: 12px;
-            display: none;
-            background: #ff6b6b15;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ff6b6b33;
-        }
-
-        .footer-text {
-            margin-top: 25px;
-            color: #555;
-            font-size: 0.75em;
-        }
-
-        /* Responsive - Tablet */
-        @media (max-width: 768px) {
-            .login-container {
-                padding: 35px 28px;
-                max-width: 380px;
-            }
-
-            .login-container h1 {
-                font-size: 1.8em;
-            }
-        }
-
-        /* Responsive - Mobile */
-        @media (max-width: 480px) {
-            html, body {
-                padding: 15px;
-            }
-
-            .login-container {
-                padding: 30px 22px;
-                border-radius: 12px;
-            }
-
-            .login-container h1 {
-                font-size: 1.6em;
-            }
-
-            .subtitle {
-                font-size: 0.8em;
-            }
-
-            .school-name {
-                font-size: 0.88em;
-            }
-
-            .section-info {
-                font-size: 0.8em;
-                margin-bottom: 25px;
-            }
-
-            .form-group input {
-                padding: 14px 15px;
-                font-size: 16px; /* Prevents iOS zoom on focus */
-            }
-
-            .btn-login {
-                padding: 16px;
-                font-size: 1em;
-            }
-        }
-
-        /* Very small screens */
-        @media (max-width: 360px) {
-            .login-container {
-                padding: 25px 18px;
-            }
-
-            .login-container h1 {
-                font-size: 1.4em;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .login-container { background: #1e1e2e; padding: 40px 35px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header h1 { color: white; font-size: 1.5em; margin-bottom: 5px; }
+        .login-header .brand { color: #00b894; font-size: 1.8em; font-weight: bold; margin-bottom: 8px; }
+        .login-header .brand span { color: #ff6b6b; }
+        .login-header p { color: #888; font-size: 0.85em; }
+        .login-header .school { color: #ccc; font-size: 0.9em; margin-top: 8px; font-weight: bold; }
+        .login-header .section { color: #888; font-size: 0.8em; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; color: #ccc; font-size: 0.85em; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.95em; transition: border-color 0.2s; }
+        .form-group input:focus { border-color: #00b894; outline: none; }
+        .form-group input::placeholder { color: #555; }
+        .btn-login { width: 100%; padding: 13px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; transition: transform 0.2s; }
+        .btn-login:hover { transform: scale(1.02); }
+        .btn-login:disabled { opacity: 0.6; pointer-events: none; }
+        .error-msg { background: #ff6b6b22; color: #ff6b6b; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 15px; border: 1px solid #ff6b6b44; display: none; font-size: 0.85em; }
+        .default-accounts { margin-top: 20px; padding: 15px; background: #2a2a3e; border-radius: 8px; }
+        .default-accounts h3 { color: #888; font-size: 0.8em; margin-bottom: 8px; }
+        .default-accounts p { color: #666; font-size: 0.75em; margin-bottom: 4px; }
+        @media (max-width: 480px) { .login-container { padding: 30px 25px; } .login-header .brand { font-size: 1.5em; } }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h1>QR<span>Attend</span></h1>
-        <p class="subtitle">QR Attendance System with Parent Notification</p>
-        <p class="school-name">Sta. Rosa Elementary School</p>
-        <p class="section-info">Grade 6 - Great Geniuses | S.Y. 2025-2026</p>
+        <div class="login-header">
+            <div class="brand">QR<span>Attend</span></div>
+            <h1>QR Attendance System with Parent Notification</h1>
+            <p class="school">Sta. Rosa Elementary School</p>
+            <p class="section">Grade 6 - Great Geniuses | S.Y. 2025-2026</p>
+        </div>
 
-        <form id="loginForm" autocomplete="off" novalidate>
+        <div class="error-msg" id="errorMsg"></div>
+
+        <form id="loginForm">
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" id="username" name="qr-user-x1" placeholder="Enter username" required autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <input type="text" id="username" placeholder="Username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="password" name="qr-pass-x1" placeholder="Enter password" required autocomplete="new-password">
+                <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
             </div>
             <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
-            <p class="error-msg" id="errorMsg"></p>
         </form>
 
-        <p class="footer-text">Sta. Rosa Elementary School &copy; 2026</p>
+        <div class="default-accounts">
+            <h3>Default Accounts:</h3>
+            <p>Admin: admin / admin123</p>
+            <p>Teacher: tifanny / teacher123</p>
+        </div>
     </div>
 
     <script>
-        // Force clear fields on page load
-        window.addEventListener('load', function() {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            // Double clear after short delay (for browser autofill)
-            setTimeout(function() {
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            }, 200);
-        });
-
-        // If already logged in, redirect
-        if (localStorage.getItem('token')) {
+        // If already logged in, go to dashboard
+        var existingToken = localStorage.getItem('token');
+        if (existingToken) {
             window.location.href = 'dashboard.html';
         }
 
@@ -252,16 +74,10 @@
             var password = document.getElementById('password').value;
             var errorMsg = document.getElementById('errorMsg');
             var loginBtn = document.getElementById('loginBtn');
+
             errorMsg.style.display = 'none';
-
-            if (!username || !password) {
-                errorMsg.textContent = 'Please enter both username and password.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
+            loginBtn.disabled = true;
             loginBtn.textContent = 'Signing in...';
-            loginBtn.classList.add('loading-btn');
 
             try {
                 var response = await fetch('/api/auth/login', {
@@ -272,22 +88,21 @@
 
                 var data = await response.json();
 
-                if (response.ok) {
+                if (response.ok && data.token) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     window.location.href = 'dashboard.html';
                 } else {
                     errorMsg.textContent = data.error || 'Invalid username or password.';
                     errorMsg.style.display = 'block';
-                    loginBtn.textContent = 'Sign In';
-                    loginBtn.classList.remove('loading-btn');
                 }
             } catch (err) {
-                errorMsg.textContent = 'Connection error. Is the server running?';
+                errorMsg.textContent = 'Connection error. The server may be starting up. Please try again in a moment.';
                 errorMsg.style.display = 'block';
-                loginBtn.textContent = 'Sign In';
-                loginBtn.classList.remove('loading-btn');
             }
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
         });
     </script>
 </body>
