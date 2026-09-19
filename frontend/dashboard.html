@@ -9,38 +9,66 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
         .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+
         .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
         .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
         .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
         .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
         .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
-        .dashboard-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .dashboard-header h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
-        .dashboard-header .welcome { color: #ccc; font-size: 0.85em; }
-        .dashboard-header .date { color: #888; font-size: 0.8em; margin-top: 5px; }
-        .error-banner { background: #ff6b6b22; color: #ff6b6b; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid #ff6b6b44; display: none; font-size: 0.85em; }
+
+        .welcome-section { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 25px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .welcome-section h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
+        .welcome-section p { color: #888; font-size: 0.85em; }
+        .welcome-section .user-info { color: #ccc; font-size: 0.9em; margin-top: 8px; }
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .stat-card { background: #1e1e2e; padding: 18px 15px; border-radius: 12px; text-align: center; }
-        .stat-card .number { font-size: 1.8em; font-weight: bold; color: #00b894; }
-        .stat-card .label { color: #888; font-size: 0.8em; margin-top: 5px; }
-        .stat-card.male .number { color: #74b9ff; }
-        .stat-card.female .number { color: #fd79a8; }
-        .stat-card.present .number { color: #00b894; }
-        .stat-card.absent .number { color: #ff6b6b; }
-        .stat-card.rate .number { color: #ffd93d; }
-        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .action-card { background: #1e1e2e; padding: 18px 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s; text-decoration: none; }
-        .action-card:hover { transform: translateY(-3px); background: #2a2a3e; }
-        .action-card .action-title { color: #00b894; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; }
-        .action-card .action-desc { color: #888; font-size: 0.75em; }
-        .recent-section { background: #1e1e2e; padding: 18px; border-radius: 12px; }
-        .recent-section h2 { color: #00b894; font-size: 1em; margin-bottom: 12px; }
-        .table-wrapper { overflow-x: auto; }
+        .stat-card { background: #1e1e2e; padding: 20px 15px; border-radius: 12px; text-align: center; border-left: 4px solid #00b894; }
+        .stat-card .stat-value { font-size: 1.8em; font-weight: bold; color: #00b894; }
+        .stat-card .stat-label { color: #888; font-size: 0.8em; margin-top: 5px; }
+        .stat-card.male { border-left-color: #74b9ff; }
+        .stat-card.male .stat-value { color: #74b9ff; }
+        .stat-card.female { border-left-color: #fd79a8; }
+        .stat-card.female .stat-value { color: #fd79a8; }
+        .stat-card.present { border-left-color: #00b894; }
+        .stat-card.present .stat-value { color: #00b894; }
+        .stat-card.absent { border-left-color: #ff6b6b; }
+        .stat-card.absent .stat-value { color: #ff6b6b; }
+        .stat-card.rate { border-left-color: #fdcb6e; }
+        .stat-card.rate .stat-value { color: #fdcb6e; }
+
+        .recent-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
+        .recent-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .recent-table { width: 100%; border-collapse: collapse; }
-        .recent-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; }
+        .recent-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; white-space: nowrap; }
         .recent-table td { padding: 10px 12px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.8em; }
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .nav-bar a { padding: 7px 10px; font-size: 0.75em; } }
-        @media (max-width: 480px) { .dashboard-container { padding: 10px; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } .nav-bar { gap: 5px; } .nav-bar a { padding: 6px 8px; font-size: 0.7em; } }
+        .recent-table tr:hover { background: #2a2a3e; }
+
+        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .status-badge.present { background: #00b89433; color: #00b894; }
+        .status-badge.absent { background: #ff6b6b33; color: #ff6b6b; }
+        .status-badge.late { background: #fdcb6e33; color: #fdcb6e; }
+
+        .no-data { text-align: center; color: #888; padding: 30px; font-size: 0.9em; }
+        .error-msg { text-align: center; color: #ff6b6b; padding: 20px; background: #ff6b6b22; border-radius: 8px; font-size: 0.85em; }
+
+        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .action-btn { padding: 15px; background: #1e1e2e; border: 1px solid #333; border-radius: 10px; text-align: center; text-decoration: none; color: #ccc; font-size: 0.85em; transition: all 0.2s; }
+        .action-btn:hover { border-color: #00b894; color: #00b894; transform: translateY(-2px); }
+        .action-btn .action-icon { font-size: 1.5em; margin-bottom: 5px; display: block; }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+            .nav-bar a { padding: 7px 10px; font-size: 0.75em; }
+        }
+        @media (max-width: 480px) {
+            .dashboard-container { padding: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+            .nav-bar { gap: 5px; padding: 10px; }
+            .nav-bar a { padding: 6px 8px; font-size: 0.7em; }
+        }
     </style>
 </head>
 <body>
@@ -55,36 +83,74 @@
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
-        <div class="error-banner" id="errorBanner"></div>
-
-        <div class="dashboard-header">
-            <h1>QRAttend Dashboard</h1>
-            <p class="welcome" id="welcomeMsg">Welcome back!</p>
-            <p class="date" id="dateDisplay"></p>
+        <div class="welcome-section">
+            <h1>QR Attendance System</h1>
+            <p>Sta. Rosa Elementary School - Grade 6 Great Geniuses | S.Y. 2025-2026</p>
+            <p class="user-info" id="userInfo">Loading...</p>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card"><div class="number" id="totalStudents">0</div><div class="label">Total Students</div></div>
-            <div class="stat-card male"><div class="number" id="maleCount">0</div><div class="label">Male</div></div>
-            <div class="stat-card female"><div class="number" id="femaleCount">0</div><div class="label">Female</div></div>
-            <div class="stat-card present"><div class="number" id="todayPresent">0</div><div class="label">Present Today</div></div>
-            <div class="stat-card absent"><div class="number" id="todayAbsent">0</div><div class="label">Absent Today</div></div>
-            <div class="stat-card rate"><div class="number" id="attendanceRate">0%</div><div class="label">Attendance Rate</div></div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalStudents">0</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card male">
+                <div class="stat-value" id="maleCount">0</div>
+                <div class="stat-label">Male</div>
+            </div>
+            <div class="stat-card female">
+                <div class="stat-value" id="femaleCount">0</div>
+                <div class="stat-label">Female</div>
+            </div>
+            <div class="stat-card present">
+                <div class="stat-value" id="todayPresent">0</div>
+                <div class="stat-label">Present Today</div>
+            </div>
+            <div class="stat-card absent">
+                <div class="stat-value" id="todayAbsent">0</div>
+                <div class="stat-label">Absent Today</div>
+            </div>
+            <div class="stat-card rate">
+                <div class="stat-value" id="attendanceRate">0%</div>
+                <div class="stat-label">Attendance Rate</div>
+            </div>
         </div>
 
         <div class="quick-actions">
-            <a href="attendance.html" class="action-card"><div class="action-title">Scan QR Code</div><div class="action-desc">Record student attendance</div></a>
-            <a href="students.html" class="action-card"><div class="action-title">Manage Students</div><div class="action-desc">Add, edit, or view students</div></a>
-            <a href="sf2-report.html" class="action-card"><div class="action-title">SF2 Report</div><div class="action-desc">Generate attendance report</div></a>
-            <a href="sms-logs.html" class="action-card"><div class="action-title">SMS Logs</div><div class="action-desc">View sent notifications</div></a>
+            <a href="attendance.html" class="action-btn">
+                <span class="action-icon">[ ]</span>
+                Scan QR Code
+            </a>
+            <a href="students.html" class="action-btn">
+                <span class="action-icon">+</span>
+                Add Student
+            </a>
+            <a href="sf2-report.html" class="action-btn">
+                <span class="action-icon">#</span>
+                SF2 Report
+            </a>
+            <a href="print-qr.html" class="action-btn">
+                <span class="action-icon">QR</span>
+                Print QR Cards
+            </a>
         </div>
 
         <div class="recent-section">
-            <h2>Recent Attendance</h2>
+            <h2>Recent Attendance Records</h2>
             <div class="table-wrapper">
                 <table class="recent-table">
-                    <thead><tr><th>Student</th><th>Date</th><th>Status</th><th>Time In</th></tr></thead>
-                    <tbody id="recentTableBody"><tr><td colspan="4" style="text-align:center; color:#888;">Loading...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student Name</th>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTableBody">
+                        <tr><td colspan="5" class="no-data">Loading...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -94,63 +160,105 @@
         var token = localStorage.getItem('token');
         var user = null;
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (!token) { window.location.href = 'index.html'; }
-
-        document.getElementById('welcomeMsg').textContent = 'Welcome, ' + (user.full_name || user.username || 'User') + '!';
-        var now = new Date();
-        var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-        var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        document.getElementById('dateDisplay').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+        if (!token) window.location.href = 'index.html';
 
         function confirmLogout(e) {
             e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
         }
 
+        // Display user info
+        if (user && user.full_name) {
+            document.getElementById('userInfo').textContent = 'Welcome, ' + user.full_name + ' (' + (user.role || 'user') + ')';
+        } else {
+            document.getElementById('userInfo').textContent = 'Welcome!';
+        }
+
+        // Load dashboard summary
         async function loadSummary() {
             try {
-                var response = await fetch('/api/sf2/summary', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) {
-                    document.getElementById('errorBanner').textContent = 'Could not load data. Server may be starting up. Please refresh.';
-                    document.getElementById('errorBanner').style.display = 'block';
+                var response = await fetch('/api/sf2/summary', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.status === 401) {
+                    // Token expired - but don't redirect, just show defaults
+                    document.getElementById('totalStudents').textContent = '0';
+                    document.getElementById('maleCount').textContent = '0';
+                    document.getElementById('femaleCount').textContent = '0';
+                    document.getElementById('todayPresent').textContent = '0';
+                    document.getElementById('todayAbsent').textContent = '0';
+                    document.getElementById('attendanceRate').textContent = '0%';
                     return;
                 }
+
+                if (!response.ok) {
+                    console.log('Summary response not ok:', response.status);
+                    return;
+                }
+
                 var data = await response.json();
                 document.getElementById('totalStudents').textContent = data.total_students || 0;
                 document.getElementById('maleCount').textContent = data.male || 0;
                 document.getElementById('femaleCount').textContent = data.female || 0;
                 document.getElementById('todayPresent').textContent = data.today_present || 0;
                 document.getElementById('todayAbsent').textContent = data.today_absent || 0;
-                document.getElementById('attendanceRate').textContent = (data.attendance_rate || '0.0') + '%';
+                document.getElementById('attendanceRate').textContent = (data.attendance_rate || '0') + '%';
             } catch (err) {
-                document.getElementById('errorBanner').textContent = 'Could not load data. Server may be starting up. Please refresh.';
-                document.getElementById('errorBanner').style.display = 'block';
+                console.log('Summary error:', err);
+                document.getElementById('totalStudents').textContent = '0';
+                document.getElementById('maleCount').textContent = '0';
+                document.getElementById('femaleCount').textContent = '0';
+                document.getElementById('todayPresent').textContent = '0';
+                document.getElementById('todayAbsent').textContent = '0';
+                document.getElementById('attendanceRate').textContent = '0%';
             }
         }
 
+        // Load recent attendance
         async function loadRecent() {
+            var tbody = document.getElementById('recentTableBody');
             try {
-                var response = await fetch('/api/attendance/recent', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) return;
-                var records = await response.json();
-                var tbody = document.getElementById('recentTableBody');
-                if (!records || records.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No attendance records yet.</td></tr>';
+                var response = await fetch('/api/attendance/recent', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet. Start scanning QR codes!</td></tr>';
                     return;
                 }
+
+                var records = await response.json();
+
+                if (!records || records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet. Start scanning QR codes!</td></tr>';
+                    return;
+                }
+
                 var html = '';
-                var limit = records.length > 10 ? 10 : records.length;
-                for (var i = 0; i < limit; i++) {
+                for (var i = 0; i < records.length; i++) {
                     var r = records[i];
-                    var sc = r.status === 'Present' ? '#00b894' : r.status === 'Late' ? '#ffd93d' : '#ff6b6b';
-                    html += '<tr><td><strong>' + (r.student_name || '-') + '</strong></td><td>' + r.date + '</td><td style="color:' + sc + ';font-weight:bold;">' + r.status + '</td><td>' + (r.time_in || '-') + '</td></tr>';
+                    var statusClass = r.status === 'Present' ? 'present' : (r.status === 'Late' ? 'late' : 'absent');
+                    var name = r.student_name || (r.last_name + ', ' + r.first_name);
+                    html += '<tr>';
+                    html += '<td>' + (i + 1) + '</td>';
+                    html += '<td>' + name + '</td>';
+                    html += '<td>' + (r.date || '-') + '</td>';
+                    html += '<td>' + (r.time_in || '-') + '</td>';
+                    html += '<td><span class="status-badge ' + statusClass + '">' + r.status + '</span></td>';
+                    html += '</tr>';
                 }
                 tbody.innerHTML = html;
             } catch (err) {
-                document.getElementById('recentTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Could not load recent attendance.</td></tr>';
+                console.log('Recent attendance error:', err);
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet. Start scanning QR codes!</td></tr>';
             }
         }
 
+        // Load everything
         loadSummary();
         loadRecent();
     </script>
