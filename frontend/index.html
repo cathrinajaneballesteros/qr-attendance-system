@@ -25,9 +25,6 @@
         .btn-login:hover { transform: scale(1.02); }
         .btn-login:disabled { opacity: 0.6; pointer-events: none; }
         .error-msg { background: #ff6b6b22; color: #ff6b6b; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 15px; border: 1px solid #ff6b6b44; display: none; font-size: 0.85em; }
-        .default-accounts { margin-top: 20px; padding: 15px; background: #2a2a3e; border-radius: 8px; }
-        .default-accounts h3 { color: #888; font-size: 0.8em; margin-bottom: 8px; }
-        .default-accounts p { color: #666; font-size: 0.75em; margin-bottom: 4px; }
         @media (max-width: 480px) { .login-container { padding: 30px 25px; } .login-header .brand { font-size: 1.5em; } }
     </style>
 </head>
@@ -53,12 +50,9 @@
             </div>
             <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
         </form>
-
-      
     </div>
 
     <script>
-        // If already logged in, go to dashboard
         var existingToken = localStorage.getItem('token');
         if (existingToken) {
             window.location.href = 'dashboard.html';
