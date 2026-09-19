@@ -9,9 +9,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
         .students-container { max-width: 1200px; margin: 0 auto; padding: 15px; }
-        .students-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .students-header h1 { font-size: 1.3em; margin-bottom: 5px; }
-        .students-header p { opacity: 0.8; font-size: 0.85em; }
 
         .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
         .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
@@ -19,16 +16,34 @@
         .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
         .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
 
-        .controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
-        .search-box { flex: 1; min-width: 180px; padding: 10px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
-        .search-box:focus { border-color: #00b894; outline: none; }
-        .filter-select { padding: 10px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
-        .btn-print-all { padding: 10px 18px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; }
-        .btn-print-all:hover { transform: scale(1.05); }
+        .page-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .page-header h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
+        .page-header p { color: #888; font-size: 0.85em; }
 
-        .students-table-wrapper { background: #1e1e2e; border-radius: 12px; overflow: hidden; }
-        .students-count { color: #888; font-size: 0.85em; padding: 15px 15px 5px 15px; }
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .add-section { background: #1e1e2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .add-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { color: #ccc; font-size: 0.8em; margin-bottom: 5px; }
+        .form-group input, .form-group select { padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
+        .form-group input:focus, .form-group select:focus { border-color: #00b894; outline: none; }
+        .form-group input::placeholder { color: #555; }
+
+        .btn-add { padding: 10px 25px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; }
+        .btn-add:hover { transform: scale(1.03); }
+        .btn-add:disabled { opacity: 0.6; pointer-events: none; }
+
+        .btn-print-all { padding: 10px 25px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; margin-left: 10px; text-decoration: none; display: inline-block; }
+        .btn-print-all:hover { transform: scale(1.03); }
+
+        .msg { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.85em; display: none; }
+        .msg.success { background: #00b89422; color: #00b894; border: 1px solid #00b89444; display: block; }
+        .msg.error { background: #ff6b6b22; color: #ff6b6b; border: 1px solid #ff6b6b44; display: block; }
+
+        .students-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
+        .students-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .student-count { color: #888; font-size: 0.85em; font-weight: normal; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .students-table { width: 100%; border-collapse: collapse; }
         .students-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; white-space: nowrap; }
         .students-table td { padding: 10px 12px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.8em; }
@@ -38,56 +53,24 @@
         .gender-badge.male { background: #74b9ff33; color: #74b9ff; }
         .gender-badge.female { background: #fd79a833; color: #fd79a8; }
 
-        .btn-qr { padding: 5px 12px; background: #00b894; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
-        .btn-qr:hover { background: #00a884; }
+        .btn-delete { padding: 5px 12px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
+        .btn-delete:hover { background: #ee5a5a; }
+        .btn-edit { padding: 5px 12px; background: #74b9ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; margin-right: 5px; }
+        .btn-edit:hover { background: #5aa0e6; }
 
-        /* QR Modal */
-        .qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
-        .qr-modal-content { background: #1e1e2e; padding: 25px; border-radius: 16px; text-align: center; max-width: 350px; width: 100%; }
-        .qr-modal-content h3 { color: #00b894; margin-bottom: 5px; font-size: 1.1em; }
-        .qr-modal-content p { color: #888; font-size: 0.85em; margin-bottom: 15px; }
-        .qr-code-container { margin: 15px auto; display: flex; justify-content: center; }
-        .btn-close-modal { padding: 10px 25px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 0.9em; margin-left: 5px; }
-        .btn-print-qr { padding: 10px 25px; background: #6c5ce7; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 0.9em; margin-right: 5px; }
-
-        /* Print All Modal */
-        .print-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1001; justify-content: center; align-items: flex-start; padding: 15px; overflow-y: auto; }
-        .print-modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 100%; margin: 20px auto; }
-        .print-modal-content h2 { text-align: center; color: #1a1a2e; margin-bottom: 5px; }
-        .print-modal-content .print-subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
-        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .qr-card { border: 1px solid #ddd; border-radius: 10px; padding: 15px; text-align: center; background: white; }
-        .qr-card h4 { color: #1a1a2e; font-size: 0.85em; margin-bottom: 3px; }
-        .qr-card p { color: #666; font-size: 0.75em; margin-bottom: 10px; }
-        .qr-card canvas, .qr-card img { display: block; margin: 0 auto; }
-        .print-actions { text-align: center; margin-top: 20px; }
-        .btn-print-now { padding: 12px 30px; background: #6c5ce7; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin: 5px; }
-        .btn-close-print { padding: 12px 30px; background: #ff6b6b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin: 5px; }
-
-        @media print {
-            body * { visibility: hidden; }
-            .print-modal, .print-modal * { visibility: visible; }
-            .print-modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
-            .print-modal-content { box-shadow: none; margin: 0; padding: 15px; }
-            .print-actions { display: none; }
-            .qr-grid { grid-template-columns: repeat(3, 1fr); }
-            .qr-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc; }
-        }
+        .search-bar { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; margin-bottom: 15px; }
+        .search-bar:focus { border-color: #00b894; outline: none; }
+        .search-bar::placeholder { color: #555; }
 
         @media (max-width: 768px) {
-            .controls { flex-direction: column; }
-            .search-box { min-width: 100%; }
+            .form-row { grid-template-columns: 1fr 1fr; }
             .nav-bar a { padding: 7px 10px; font-size: 0.75em; }
-            .qr-grid { grid-template-columns: repeat(2, 1fr); }
         }
-
         @media (max-width: 480px) {
             .students-container { padding: 10px; }
-            .students-table th, .students-table td { padding: 8px 6px; font-size: 0.75em; }
+            .form-row { grid-template-columns: 1fr; }
             .nav-bar { gap: 5px; padding: 10px; }
             .nav-bar a { padding: 6px 8px; font-size: 0.7em; }
-            .qr-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .qr-card { padding: 10px; }
         }
     </style>
 </head>
@@ -103,65 +86,94 @@
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
-        <div class="students-header">
+        <div class="page-header">
             <h1>Student Management</h1>
-            <p>Sta. Rosa ES - Grade 6 Great Geniuses</p>
+            <p>Add, edit, and manage students. Each student gets a unique QR code based on their name.</p>
         </div>
 
-        <div class="controls">
-            <input type="text" class="search-box" id="searchBox" placeholder="Search students by name..." autocomplete="off">
-            <select class="filter-select" id="genderFilter">
-                <option value="all">All Genders</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-            <button class="btn-print-all" onclick="showPrintAllModal()">Print All QR Codes</button>
+        <!-- Add Student Form -->
+        <div class="add-section">
+            <h2>Add New Student</h2>
+            <form id="addStudentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="firstName" placeholder="First name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Middle Name</label>
+                        <input type="text" id="middleName" placeholder="Middle name">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="lastName" placeholder="Last name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Gender *</label>
+                        <select id="gender" required>
+                            <option value="">Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>LRN</label>
+                        <input type="text" id="lrn" placeholder="Learner Reference Number">
+                    </div>
+                    <div class="form-group">
+                        <label>Guardian Name</label>
+                        <input type="text" id="guardianName" placeholder="Guardian name">
+                    </div>
+                    <div class="form-group">
+                        <label>Guardian Phone</label>
+                        <input type="text" id="guardianPhone" placeholder="09XXXXXXXXX">
+                    </div>
+                </div>
+                <button type="submit" class="btn-add" id="addBtn">Add Student</button>
+                <a href="print-qr.html" class="btn-print-all">Print All QR Codes</a>
+                <div class="msg" id="formMsg"></div>
+            </form>
         </div>
 
-        <div class="students-table-wrapper">
-            <p class="students-count" id="studentsCount">Loading...</p>
-            <div class="table-scroll">
+        <!-- Students List -->
+        <div class="students-section">
+            <h2>
+                All Students
+                <span class="student-count" id="studentCount">Loading...</span>
+            </h2>
+            <input type="text" class="search-bar" id="searchBar" placeholder="Search students by name..." oninput="filterStudents()">
+            <div class="table-wrapper">
                 <table class="students-table">
-                    <thead><tr><th>#</th><th>Name</th><th>Gender</th><th>Guardian</th><th>Contact</th><th>QR Code</th></tr></thead>
-                    <tbody id="studentsTableBody"><tr><td colspan="6" style="text-align:center; color:#888;">Loading students...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>LRN</th>
+                            <th>Guardian</th>
+                            <th>Phone</th>
+                            <th>QR Code</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr><td colspan="8" style="text-align:center; color:#888;">Loading students...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Single QR Modal -->
-    <div class="qr-modal" id="qrModal">
-        <div class="qr-modal-content">
-            <h3 id="modalStudentName"></h3>
-            <p id="modalStudentInfo"></p>
-            <div class="qr-code-container" id="modalQRCode"></div>
-            <div>
-                <button class="btn-print-qr" onclick="printSingleQR()">Print</button>
-                <button class="btn-close-modal" onclick="closeModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Print All QR Modal -->
-    <div class="print-modal" id="printAllModal">
-        <div class="print-modal-content">
-            <h2>QR Codes - Grade 6 Great Geniuses</h2>
-            <p class="print-subtitle">Sta. Rosa Elementary School | S.Y. 2025-2026</p>
-            <div class="qr-grid" id="qrGrid"></div>
-            <div class="print-actions">
-                <button class="btn-print-now" onclick="window.print()">Print All</button>
-                <button class="btn-close-print" onclick="closePrintModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script>
-        const token = localStorage.getItem('token');
+        var token = localStorage.getItem('token');
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
         if (!token) window.location.href = 'index.html';
-        let allStudents = [];
+
+        var allStudents = [];
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -171,168 +183,223 @@
             }
         }
 
+        // Load students
         async function loadStudents() {
             try {
-                const response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) throw new Error('Failed');
+                var response = await fetch('/api/students', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    document.getElementById('studentsTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ff6b6b;">Could not load students. Server may be starting up. Please refresh.</td></tr>';
+                    document.getElementById('studentCount').textContent = '(Error)';
+                    return;
+                }
+
                 allStudents = await response.json();
                 renderStudents(allStudents);
+                document.getElementById('studentCount').textContent = '(' + allStudents.length + ' students)';
             } catch (err) {
-                document.getElementById('studentsTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ff6b6b;">Failed to load students.</td></tr>';
+                document.getElementById('studentsTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ff6b6b;">Connection error. Please refresh.</td></tr>';
+                document.getElementById('studentCount').textContent = '(Error)';
             }
         }
 
         function renderStudents(students) {
-            document.getElementById('studentsCount').textContent = 'Showing ' + students.length + ' student(s)';
             var tbody = document.getElementById('studentsTableBody');
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No students found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888;">No students found. Add a student above.</td></tr>';
                 return;
             }
+
             var html = '';
             for (var i = 0; i < students.length; i++) {
                 var s = students[i];
-                var fullName = s.last_name + ', ' + s.first_name + ' ' + (s.middle_name || '');
-                var qrData = s.first_name + ' ' + s.last_name;
+                var genderClass = s.gender === 'Male' ? 'male' : 'female';
+                var fullName = s.last_name + ', ' + s.first_name + (s.middle_name ? ' ' + s.middle_name : '');
+                var qrData = s.qr_code || (s.first_name + ' ' + s.last_name);
+
                 html += '<tr>';
                 html += '<td>' + (i + 1) + '</td>';
                 html += '<td><strong>' + fullName + '</strong></td>';
-                html += '<td><span class="gender-badge ' + (s.gender || '').toLowerCase() + '">' + s.gender + '</span></td>';
+                html += '<td><span class="gender-badge ' + genderClass + '">' + s.gender + '</span></td>';
+                html += '<td>' + (s.lrn || '-') + '</td>';
                 html += '<td>' + (s.guardian_name || '-') + '</td>';
                 html += '<td>' + (s.guardian_phone || '-') + '</td>';
-                html += '<td><button class="btn-qr" onclick="showQR(\'' + qrData.replace(/'/g, "\\'") + '\', \'' + s.gender + '\')">View QR</button></td>';
+                html += '<td><canvas id="qr-' + s.id + '" width="60" height="60"></canvas></td>';
+                html += '<td>';
+                html += '<button class="btn-edit" onclick="editStudent(' + s.id + ')">Edit</button>';
+                html += '<button class="btn-delete" onclick="deleteStudent(' + s.id + ', \'' + fullName.replace(/'/g, "\\'") + '\')">Delete</button>';
+                html += '</td>';
                 html += '</tr>';
             }
             tbody.innerHTML = html;
+
+            // Generate QR codes after rendering
+            for (var j = 0; j < students.length; j++) {
+                var st = students[j];
+                var canvas = document.getElementById('qr-' + st.id);
+                var qrText = st.qr_code || (st.first_name + ' ' + st.last_name);
+                if (canvas) {
+                    QRCode.toCanvas(canvas, qrText, { width: 60, margin: 1 });
+                }
+            }
         }
 
-        document.getElementById('searchBox').addEventListener('input', filterStudents);
-        document.getElementById('genderFilter').addEventListener('change', filterStudents);
-
         function filterStudents() {
-            var search = document.getElementById('searchBox').value.toLowerCase();
-            var gender = document.getElementById('genderFilter').value;
-            var filtered = allStudents;
-            if (search) {
-                filtered = filtered.filter(function(s) {
-                    return (s.first_name + ' ' + s.last_name + ' ' + (s.middle_name || '')).toLowerCase().indexOf(search) !== -1;
-                });
+            var search = document.getElementById('searchBar').value.toLowerCase();
+            if (!search) {
+                renderStudents(allStudents);
+                return;
             }
-            if (gender !== 'all') {
-                filtered = filtered.filter(function(s) { return s.gender === gender; });
+            var filtered = [];
+            for (var i = 0; i < allStudents.length; i++) {
+                var s = allStudents[i];
+                var name = (s.first_name + ' ' + s.last_name + ' ' + (s.middle_name || '')).toLowerCase();
+                if (name.indexOf(search) !== -1) {
+                    filtered.push(s);
+                }
             }
             renderStudents(filtered);
         }
 
-        // ========== SINGLE QR CODE ==========
-        function showQR(name, gender) {
-            document.getElementById('modalStudentName').textContent = name;
-            document.getElementById('modalStudentInfo').textContent = gender + ' | Sta. Rosa ES - Grade 6 Great Geniuses';
-            var qrDiv = document.getElementById('modalQRCode');
-            qrDiv.innerHTML = '';
-            new QRCode(qrDiv, {
-                text: name,
-                width: 200,
-                height: 200,
-                colorDark: '#1a1a2e',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            document.getElementById('qrModal').style.display = 'flex';
-        }
+        // Add student
+        document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var firstName = document.getElementById('firstName').value.trim().toUpperCase();
+            var middleName = document.getElementById('middleName').value.trim().toUpperCase();
+            var lastName = document.getElementById('lastName').value.trim().toUpperCase();
+            var gender = document.getElementById('gender').value;
+            var lrn = document.getElementById('lrn').value.trim();
+            var guardianName = document.getElementById('guardianName').value.trim();
+            var guardianPhone = document.getElementById('guardianPhone').value.trim();
+            var formMsg = document.getElementById('formMsg');
+            var addBtn = document.getElementById('addBtn');
 
-        function closeModal() {
-            document.getElementById('qrModal').style.display = 'none';
-        }
+            formMsg.className = 'msg';
+            formMsg.style.display = 'none';
 
-        function printSingleQR() {
-            var name = document.getElementById('modalStudentName').textContent;
-            var info = document.getElementById('modalStudentInfo').textContent;
-            var qrCanvas = document.querySelector('#modalQRCode canvas');
-            var qrImg = document.querySelector('#modalQRCode img');
-            var imgSrc = '';
-
-            if (qrCanvas) {
-                imgSrc = qrCanvas.toDataURL('image/png');
-            } else if (qrImg) {
-                imgSrc = qrImg.src;
-            }
-
-            if (!imgSrc) { alert('QR code not ready. Please try again.'); return; }
-
-            var printWindow = window.open('', '_blank');
-            printWindow.document.write(
-                '<html><head><title>QR Code - ' + name + '</title>' +
-                '<style>body{text-align:center;font-family:Arial,sans-serif;padding:30px;}h2{margin-bottom:5px;color:#333;}p{color:#666;margin-bottom:15px;}img{display:block;margin:0 auto;}</style>' +
-                '</head><body>' +
-                '<h2>' + name + '</h2>' +
-                '<p>' + info + '</p>' +
-                '<img src="' + imgSrc + '" width="200" height="200">' +
-                '<script>setTimeout(function(){window.print();window.close();},500);<\/script>' +
-                '</body></html>'
-            );
-            printWindow.document.close();
-        }
-
-        // ========== PRINT ALL QR CODES ==========
-        function showPrintAllModal() {
-            if (allStudents.length === 0) {
-                alert('No students loaded yet. Please wait and try again.');
+            if (!firstName || !lastName || !gender) {
+                formMsg.textContent = 'First name, last name, and gender are required.';
+                formMsg.className = 'msg error';
                 return;
             }
 
-            var grid = document.getElementById('qrGrid');
-            grid.innerHTML = '';
+            addBtn.disabled = true;
+            addBtn.textContent = 'Adding...';
 
-            // Create all QR card containers first
-            for (var i = 0; i < allStudents.length; i++) {
-                var s = allStudents[i];
-                var qrData = s.first_name + ' ' + s.last_name;
-                var card = document.createElement('div');
-                card.className = 'qr-card';
+            try {
+                var response = await fetch('/api/students', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        middle_name: middleName || null,
+                        last_name: lastName,
+                        gender: gender,
+                        lrn: lrn || null,
+                        guardian_name: guardianName || null,
+                        guardian_phone: guardianPhone || null
+                    })
+                });
 
-                var h4 = document.createElement('h4');
-                h4.textContent = s.last_name + ', ' + s.first_name;
-                card.appendChild(h4);
+                var data = await response.json();
 
-                var p = document.createElement('p');
-                p.textContent = s.gender + ' | #' + (i + 1);
-                card.appendChild(p);
-
-                var qrDiv = document.createElement('div');
-                qrDiv.id = 'print-qr-' + i;
-                card.appendChild(qrDiv);
-
-                grid.appendChild(card);
+                if (response.ok) {
+                    formMsg.textContent = 'Student ' + firstName + ' ' + lastName + ' added successfully!';
+                    formMsg.className = 'msg success';
+                    document.getElementById('firstName').value = '';
+                    document.getElementById('middleName').value = '';
+                    document.getElementById('lastName').value = '';
+                    document.getElementById('gender').value = '';
+                    document.getElementById('lrn').value = '';
+                    document.getElementById('guardianName').value = '';
+                    document.getElementById('guardianPhone').value = '';
+                    loadStudents();
+                } else {
+                    formMsg.textContent = data.error || 'Failed to add student.';
+                    formMsg.className = 'msg error';
+                }
+            } catch (err) {
+                formMsg.textContent = 'Connection error. Make sure the server is running.';
+                formMsg.className = 'msg error';
             }
 
-            // Show the modal first
-            document.getElementById('printAllModal').style.display = 'flex';
+            addBtn.disabled = false;
+            addBtn.textContent = 'Add Student';
+        });
 
-            // Generate QR codes after modal is visible (with small delay for DOM rendering)
-            setTimeout(function() {
-                for (var j = 0; j < allStudents.length; j++) {
-                    var student = allStudents[j];
-                    var qrText = student.first_name + ' ' + student.last_name;
-                    var container = document.getElementById('print-qr-' + j);
-                    if (container) {
-                        new QRCode(container, {
-                            text: qrText,
-                            width: 150,
-                            height: 150,
-                            colorDark: '#1a1a2e',
-                            colorLight: '#ffffff',
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                    }
+        // Edit student
+        function editStudent(id) {
+            var student = null;
+            for (var i = 0; i < allStudents.length; i++) {
+                if (allStudents[i].id === id) { student = allStudents[i]; break; }
+            }
+            if (!student) return;
+
+            var newFirst = prompt('First Name:', student.first_name);
+            if (newFirst === null) return;
+            var newMiddle = prompt('Middle Name:', student.middle_name || '');
+            if (newMiddle === null) return;
+            var newLast = prompt('Last Name:', student.last_name);
+            if (newLast === null) return;
+            var newGender = prompt('Gender (Male/Female):', student.gender);
+            if (newGender === null) return;
+            var newLrn = prompt('LRN:', student.lrn || '');
+            if (newLrn === null) return;
+            var newGuardian = prompt('Guardian Name:', student.guardian_name || '');
+            if (newGuardian === null) return;
+            var newPhone = prompt('Guardian Phone:', student.guardian_phone || '');
+            if (newPhone === null) return;
+
+            fetch('/api/students/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    first_name: newFirst.toUpperCase(),
+                    middle_name: newMiddle.toUpperCase() || null,
+                    last_name: newLast.toUpperCase(),
+                    gender: newGender,
+                    lrn: newLrn || null,
+                    guardian_name: newGuardian || null,
+                    guardian_phone: newPhone || null
+                })
+            }).then(function(res) {
+                if (res.ok) {
+                    loadStudents();
+                } else {
+                    alert('Failed to update student.');
                 }
-            }, 300);
+            }).catch(function() {
+                alert('Connection error.');
+            });
         }
 
-        function closePrintModal() {
-            document.getElementById('printAllModal').style.display = 'none';
+        // Delete student
+        function deleteStudent(id, name) {
+            if (!confirm('Are you sure you want to delete ' + name + '? This will also delete their attendance records.')) return;
+
+            fetch('/api/students/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).then(function(res) {
+                if (res.ok) {
+                    loadStudents();
+                } else {
+                    alert('Failed to delete student.');
+                }
+            }).catch(function() {
+                alert('Connection error.');
+            });
         }
 
+        // Load on page ready
         loadStudents();
     </script>
 </body>
