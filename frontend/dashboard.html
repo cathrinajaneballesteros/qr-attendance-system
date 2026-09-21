@@ -36,7 +36,7 @@
         .stat-card.rate { border-left-color: #fdcb6e; }
         .stat-card.rate .stat-value { color: #fdcb6e; }
 
-        .recent-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
+        .recent-section { background: #1e1e2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
         .recent-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .recent-table { width: 100%; border-collapse: collapse; }
@@ -50,12 +50,21 @@
         .status-badge.late { background: #fdcb6e33; color: #fdcb6e; }
 
         .no-data { text-align: center; color: #888; padding: 30px; font-size: 0.9em; }
-        .error-msg { text-align: center; color: #ff6b6b; padding: 20px; background: #ff6b6b22; border-radius: 8px; font-size: 0.85em; }
 
         .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .action-btn { padding: 15px; background: #1e1e2e; border: 1px solid #333; border-radius: 10px; text-align: center; text-decoration: none; color: #ccc; font-size: 0.85em; transition: all 0.2s; }
         .action-btn:hover { border-color: #00b894; color: #00b894; transform: translateY(-2px); }
         .action-btn .action-icon { font-size: 1.5em; margin-bottom: 5px; display: block; }
+
+        /* Student list section */
+        .students-list-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
+        .students-list-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
+        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #333; }
+        .student-item:hover { background: #2a2a3e; }
+        .student-name { color: #ddd; font-size: 0.85em; }
+        .student-gender { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; }
+        .student-gender.male { background: #74b9ff33; color: #74b9ff; }
+        .student-gender.female { background: #fd79a833; color: #fd79a8; }
 
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(3, 1fr); }
@@ -79,7 +88,7 @@
             <a href="attendance.html">Scan QR</a>
             <a href="sf2-report.html">SF2 Report</a>
             <a href="sms-logs.html">SMS Logs</a>
-            <a href="manage-users.html">Manage Users</a>
+            <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -135,7 +144,15 @@
             </a>
         </div>
 
-        <div class="recent-section">
+        <!-- Student Names List -->
+        <div class="students-list-section">
+            <h2>Enrolled Students - Grade 6 Great Geniuses</h2>
+            <div id="studentsList">
+                <div class="no-data">Loading students...</div>
+            </div>
+        </div>
+
+        <div class="recent-section" style="margin-top: 15px;">
             <h2>Recent Attendance Records</h2>
             <div class="table-wrapper">
                 <table class="recent-table">
@@ -157,10 +174,21 @@
     </div>
 
     <script>
+        // ISSUE 2 FIX: Check token FIRST - redirect to login if not logged in
         var token = localStorage.getItem('token');
         var user = null;
+
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (!token) window.location.href = 'index.html';
+
+        // Hide manage users for non-admin
+        if (user && user.role !== 'admin') {
+            var manageLink = document.getElementById('manageUsersLink');
+            if (manageLink) manageLink.style.display = 'none';
+        }
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -177,7 +205,7 @@
             document.getElementById('userInfo').textContent = 'Welcome!';
         }
 
-        // Load dashboard summary
+        // ISSUE 1 FIX: Load summary with proper error handling (no error message shown)
         async function loadSummary() {
             try {
                 var response = await fetch('/api/sf2/summary', {
@@ -185,20 +213,12 @@
                 });
 
                 if (response.status === 401) {
-                    // Token expired - but don't redirect, just show defaults
-                    document.getElementById('totalStudents').textContent = '0';
-                    document.getElementById('maleCount').textContent = '0';
-                    document.getElementById('femaleCount').textContent = '0';
-                    document.getElementById('todayPresent').textContent = '0';
-                    document.getElementById('todayAbsent').textContent = '0';
-                    document.getElementById('attendanceRate').textContent = '0%';
+                    localStorage.clear();
+                    window.location.href = 'index.html';
                     return;
                 }
 
-                if (!response.ok) {
-                    console.log('Summary response not ok:', response.status);
-                    return;
-                }
+                if (!response.ok) return;
 
                 var data = await response.json();
                 document.getElementById('totalStudents').textContent = data.total_students || 0;
@@ -208,13 +228,58 @@
                 document.getElementById('todayAbsent').textContent = data.today_absent || 0;
                 document.getElementById('attendanceRate').textContent = (data.attendance_rate || '0') + '%';
             } catch (err) {
-                console.log('Summary error:', err);
-                document.getElementById('totalStudents').textContent = '0';
-                document.getElementById('maleCount').textContent = '0';
-                document.getElementById('femaleCount').textContent = '0';
-                document.getElementById('todayPresent').textContent = '0';
-                document.getElementById('todayAbsent').textContent = '0';
-                document.getElementById('attendanceRate').textContent = '0%';
+                console.log('Summary load error:', err);
+            }
+        }
+
+        // ISSUE 3 FIX: Load and display student names on dashboard
+        async function loadStudentNames() {
+            var container = document.getElementById('studentsList');
+            try {
+                var response = await fetch('/api/students', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    container.innerHTML = '<div class="no-data">No students loaded yet.</div>';
+                    return;
+                }
+
+                var students = await response.json();
+                if (!students || students.length === 0) {
+                    container.innerHTML = '<div class="no-data">No students enrolled yet.</div>';
+                    return;
+                }
+
+                var males = [];
+                var females = [];
+                for (var i = 0; i < students.length; i++) {
+                    if (students[i].gender === 'Male') males.push(students[i]);
+                    else females.push(students[i]);
+                }
+
+                males.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+                females.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+
+                var html = '';
+                html += '<div style="color:#74b9ff; font-weight:bold; padding:10px 12px; font-size:0.85em; border-bottom:2px solid #333;">MALE (' + males.length + ')</div>';
+                for (var m = 0; m < males.length; m++) {
+                    var ms = males[m];
+                    var mName = (m + 1) + '. ' + ms.last_name + ', ' + ms.first_name + (ms.middle_name ? ' ' + ms.middle_name : '');
+                    html += '<div class="student-item"><span class="student-name">' + mName + '</span><span class="student-gender male">Male</span></div>';
+                }
+
+                html += '<div style="color:#fd79a8; font-weight:bold; padding:10px 12px; font-size:0.85em; border-bottom:2px solid #333; margin-top:5px;">FEMALE (' + females.length + ')</div>';
+                for (var f = 0; f < females.length; f++) {
+                    var fs = females[f];
+                    var fName = (f + 1) + '. ' + fs.last_name + ', ' + fs.first_name + (fs.middle_name ? ' ' + fs.middle_name : '');
+                    html += '<div class="student-item"><span class="student-name">' + fName + '</span><span class="student-gender female">Female</span></div>';
+                }
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.log('Students load error:', err);
+                container.innerHTML = '<div class="no-data">Could not load students.</div>';
             }
         }
 
@@ -232,7 +297,6 @@
                 }
 
                 var records = await response.json();
-
                 if (!records || records.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet. Start scanning QR codes!</td></tr>';
                     return;
@@ -254,12 +318,13 @@
                 tbody.innerHTML = html;
             } catch (err) {
                 console.log('Recent attendance error:', err);
-                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet. Start scanning QR codes!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet.</td></tr>';
             }
         }
 
         // Load everything
         loadSummary();
+        loadStudentNames();
         loadRecent();
     </script>
 </body>
