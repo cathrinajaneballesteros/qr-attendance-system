@@ -58,9 +58,15 @@ router.post('/login', function(req, res) {
 });
 
 // POST register (admin only)
-router.post('/register', auth, function(req, res) {
+router.post('/register', function(req, res) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided.' });
+    }
     try {
-        if (req.user.role !== 'admin') {
+        var token = authHeader.split(' ')[1];
+        var decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.role !== 'admin') {
             return res.status(403).json({ error: 'Only admins can register new users.' });
         }
 
@@ -89,9 +95,15 @@ router.post('/register', auth, function(req, res) {
 });
 
 // GET all users (admin only)
-router.get('/users', auth, function(req, res) {
+router.get('/users', function(req, res) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided.' });
+    }
     try {
-        if (req.user.role !== 'admin') {
+        var token = authHeader.split(' ')[1];
+        var decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.role !== 'admin') {
             return res.status(403).json({ error: 'Only admins can view users.' });
         }
         var users = db.all('SELECT id, username, full_name, role, created_at FROM users ORDER BY created_at DESC', []);
@@ -103,13 +115,19 @@ router.get('/users', auth, function(req, res) {
 });
 
 // DELETE user (admin only)
-router.delete('/users/:id', auth, function(req, res) {
+router.delete('/users/:id', function(req, res) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided.' });
+    }
     try {
-        if (req.user.role !== 'admin') {
+        var token = authHeader.split(' ')[1];
+        var decoded = jwt.verify(token, JWT_SECRET);
+        if (decoded.role !== 'admin') {
             return res.status(403).json({ error: 'Only admins can delete users.' });
         }
         var userId = parseInt(req.params.id);
-        if (userId === req.user.id) {
+        if (userId === decoded.id) {
             return res.status(400).json({ error: 'You cannot delete your own account.' });
         }
         db.run('DELETE FROM users WHERE id = ?', [userId]);

@@ -2,10 +2,20 @@
 var express = require('express');
 var router = express.Router();
 var db = require('../database/db');
-var auth = require('../middleware/auth');
+var jwt = require('jsonwebtoken');
+var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2025';
 
-// GET summary for dashboard
-router.get('/summary', auth, function(req, res) {
+function checkAuth(req) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    try {
+        return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    } catch (e) { return null; }
+}
+
+router.get('/summary', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var today = new Date().toISOString().split('T')[0];
         var totalStudents = db.get('SELECT COUNT(*) as count FROM students', []).count || 0;
@@ -15,22 +25,16 @@ router.get('/summary', auth, function(req, res) {
         var todayAbsent = totalStudents - todayPresent;
         var attendanceRate = totalStudents > 0 ? ((todayPresent / totalStudents) * 100).toFixed(1) : '0.0';
 
-        res.json({
-            total_students: totalStudents,
-            male: maleCount,
-            female: femaleCount,
-            today_present: todayPresent,
-            today_absent: todayAbsent,
-            attendance_rate: attendanceRate
-        });
+        res.json({ total_students: totalStudents, male: maleCount, female: femaleCount, today_present: todayPresent, today_absent: todayAbsent, attendance_rate: attendanceRate });
     } catch (err) {
         console.error('Summary error:', err);
         res.status(500).json({ error: 'Failed to load summary' });
     }
 });
 
-// GET SF2 report data
-router.get('/report', auth, function(req, res) {
+router.get('/report', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var month = parseInt(req.query.month) || (new Date().getMonth() + 1);
         var year = parseInt(req.query.year) || new Date().getFullYear();
@@ -100,8 +104,9 @@ router.get('/report', auth, function(req, res) {
     }
 });
 
-// GET download SF2 as Excel
-router.get('/download', auth, function(req, res) {
+router.get('/download', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var ExcelJS = require('exceljs');
         var month = parseInt(req.query.month) || (new Date().getMonth() + 1);

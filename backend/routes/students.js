@@ -2,10 +2,20 @@
 var express = require('express');
 var router = express.Router();
 var db = require('../database/db');
-var auth = require('../middleware/auth');
+var jwt = require('jsonwebtoken');
+var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2025';
 
-// GET all students
-router.get('/', auth, function(req, res) {
+function checkAuth(req) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    try {
+        return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    } catch (e) { return null; }
+}
+
+router.get('/', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var students = db.all('SELECT * FROM students ORDER BY gender ASC, last_name ASC', []);
         res.json(students);
@@ -15,8 +25,9 @@ router.get('/', auth, function(req, res) {
     }
 });
 
-// GET single student
-router.get('/:id', auth, function(req, res) {
+router.get('/:id', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var student = db.get('SELECT * FROM students WHERE id = ?', [parseInt(req.params.id)]);
         if (!student) return res.status(404).json({ error: 'Student not found' });
@@ -27,8 +38,9 @@ router.get('/:id', auth, function(req, res) {
     }
 });
 
-// POST add new student
-router.post('/', auth, function(req, res) {
+router.post('/', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var body = req.body;
         if (!body.first_name || !body.last_name || !body.gender) {
@@ -36,7 +48,7 @@ router.post('/', auth, function(req, res) {
         }
         var qrCode = body.first_name + ' ' + body.last_name;
         var result = db.run('INSERT INTO students (first_name, middle_name, last_name, gender, lrn, guardian_name, guardian_phone, qr_code, assigned_teacher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [body.first_name, body.middle_name || null, body.last_name, body.gender, body.lrn || null, body.guardian_name || null, body.guardian_phone || null, qrCode, req.user.id]);
+            [body.first_name, body.middle_name || null, body.last_name, body.gender, body.lrn || null, body.guardian_name || null, body.guardian_phone || null, qrCode, user.id]);
         res.status(201).json({ message: 'Student added successfully', id: result.lastInsertRowid, qr_code: qrCode });
     } catch (err) {
         console.error('Add student error:', err);
@@ -44,8 +56,9 @@ router.post('/', auth, function(req, res) {
     }
 });
 
-// PUT update student
-router.put('/:id', auth, function(req, res) {
+router.put('/:id', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var body = req.body;
         if (!body.first_name || !body.last_name || !body.gender) {
@@ -61,8 +74,9 @@ router.put('/:id', auth, function(req, res) {
     }
 });
 
-// DELETE student
-router.delete('/:id', auth, function(req, res) {
+router.delete('/:id', function(req, res) {
+    var user = checkAuth(req);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
         var id = parseInt(req.params.id);
         db.run('DELETE FROM attendance WHERE student_id = ?', [id]);
