@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Print QR Code ID Cards</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; padding: 20px; }
@@ -20,7 +19,6 @@
         .btn-print { background: linear-gradient(135deg, #00b894, #00cec9); color: white; }
         .btn-back { background: #2a2a3e; color: #ccc; }
         .btn-back:hover { background: #3a3a4e; }
-        .btn-download { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; }
 
         .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 900px; margin: 0 auto; }
 
@@ -28,8 +26,8 @@
         .id-card .card-top { background: linear-gradient(135deg, #00b894, #00cec9); color: white; padding: 8px 10px; margin: -15px -12px 12px -12px; font-size: 0.6em; font-weight: bold; }
         .id-card .card-top .school-name { font-size: 1.1em; margin-bottom: 2px; }
         .id-card .card-top .section-name { font-weight: normal; opacity: 0.9; font-size: 0.9em; }
-        .id-card .qr-wrapper { margin: 8px auto; }
-        .id-card .qr-wrapper canvas { display: block; margin: 0 auto; }
+        .id-card .qr-wrapper { margin: 8px auto; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; }
+        .id-card .qr-wrapper img { display: block; margin: 0 auto; width: 130px; height: 130px; }
         .id-card .student-name { font-weight: bold; color: #1a1a2e; font-size: 0.7em; margin-top: 8px; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
         .id-card .student-gender { font-size: 0.6em; color: #888; margin-top: 4px; }
         .id-card .student-number { position: absolute; top: 42px; left: 8px; background: #1a1a2e; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.55em; font-weight: bold; display: flex; align-items: center; justify-content: center; }
@@ -38,6 +36,7 @@
         .gender-separator { grid-column: 1 / -1; text-align: center; padding: 10px; color: #00b894; font-weight: bold; font-size: 0.9em; border-bottom: 2px solid #333; margin: 5px 0; }
 
         .no-data { text-align: center; color: #888; padding: 40px; font-size: 1em; }
+        .loading { text-align: center; color: #00b894; padding: 40px; font-size: 1em; }
 
         @media print {
             body { background: white; color: black; padding: 5mm; }
@@ -62,17 +61,22 @@
     </div>
 
     <div class="btn-group">
-        <a href="students.html" class="btn btn-back">Back to Students</a>
+        <a href="dashboard.html" class="btn btn-back">Back to Dashboard</a>
         <button class="btn btn-print" onclick="window.print()">Print All ID Cards</button>
     </div>
 
     <div id="cardsContainer">
-        <div class="no-data" id="loadingMsg">Loading students...</div>
+        <div class="loading">Loading students and generating QR codes...</div>
     </div>
 
     <script>
         var token = localStorage.getItem('token');
         if (!token) { window.location.href = 'index.html'; }
+
+        // QR Code generator using Google Charts API (always works, no library needed)
+        function getQRImageURL(text, size) {
+            return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
+        }
 
         async function loadAndGenerateCards() {
             var container = document.getElementById('cardsContainer');
@@ -111,33 +115,24 @@
                 females.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
 
                 var html = '<div class="cards-grid">';
+
+                // Male students
                 html += '<div class="gender-separator">MALE STUDENTS (' + males.length + ')</div>';
                 for (var m = 0; m < males.length; m++) {
                     html += createCardHTML(males[m], m + 1);
                 }
+
+                // Female students
                 html += '<div class="gender-separator">FEMALE STUDENTS (' + females.length + ')</div>';
                 for (var f = 0; f < females.length; f++) {
                     html += createCardHTML(females[f], f + 1);
                 }
+
                 html += '</div>';
                 container.innerHTML = html;
 
-                // Generate QR codes
-                var allStudents = males.concat(females);
-                for (var j = 0; j < allStudents.length; j++) {
-                    var s = allStudents[j];
-                    var qrText = s.qr_code || (s.first_name + ' ' + s.last_name);
-                    var canvas = document.getElementById('card-qr-' + s.id);
-                    if (canvas) {
-                        QRCode.toCanvas(canvas, qrText, {
-                            width: 130,
-                            margin: 1,
-                            color: { dark: '#1a1a2e', light: '#ffffff' }
-                        });
-                    }
-                }
-
             } catch (err) {
+                console.error('Error:', err);
                 container.innerHTML = '<div class="no-data">Connection error. Server may be starting up. Please refresh.</div>';
             }
         }
@@ -145,6 +140,9 @@
         function createCardHTML(student, number) {
             var fullName = student.last_name + ', ' + student.first_name;
             if (student.middle_name) fullName += ' ' + student.middle_name;
+
+            var qrText = student.qr_code || (student.first_name + ' ' + student.last_name);
+            var qrImageUrl = getQRImageURL(qrText, 150);
 
             var card = '';
             card += '<div class="id-card">';
@@ -154,7 +152,7 @@
             card += '  </div>';
             card += '  <div class="student-number">' + number + '</div>';
             card += '  <div class="qr-wrapper">';
-            card += '    <canvas id="card-qr-' + student.id + '" width="130" height="130"></canvas>';
+            card += '    <img src="' + qrImageUrl + '" alt="QR Code for ' + fullName + '" width="130" height="130">';
             card += '  </div>';
             card += '  <div class="student-name">' + fullName + '</div>';
             card += '  <div class="student-gender">' + student.gender + '</div>';
