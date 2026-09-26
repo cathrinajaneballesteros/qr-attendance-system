@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         body { padding: 15px; }
-        .admin-container { max-width: 1000px; margin: 0 auto; }
+        .admin-container { max-width: 1100px; margin: 0 auto; }
 
         .clock-section { background: linear-gradient(135deg, #880e4f, #ad1457); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(136,14,79,0.3); }
         .clock-time { font-size: 2.8em; font-weight: bold; letter-spacing: 3px; font-family: 'Courier New', monospace; }
@@ -36,27 +36,50 @@
         .section-box h2 { color: #880e4f; font-size: 1.1em; margin-bottom: 15px; }
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th { background: #fce4ec; color: #880e4f; padding: 10px 12px; text-align: left; font-size: 0.8em; }
-        .data-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
+        .data-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; vertical-align: middle; }
         .data-table tr:hover { background: #fff5f7; }
         .role-badge { padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: bold; }
         .role-badge.admin { background: #fce4ec; color: #880e4f; }
         .role-badge.teacher { background: #e3f2fd; color: #1565c0; }
-        .status-badge { padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: bold; }
-        .status-badge.present { background: #e8f5e9; color: #2e7d32; }
-        .status-badge.late { background: #fff3e0; color: #e65100; }
-        .status-badge.absent { background: #ffebee; color: #c62828; }
 
-        @media (max-width: 480px) { .clock-time { font-size: 2em; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+        /* Progress dropdown styles */
+        .progress-select { padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: bold; cursor: pointer; border: 2px solid; outline: none; transition: all 0.2s; }
+        .progress-select.submitted { background: #e8f5e9; color: #2e7d32; border-color: #66bb6a; }
+        .progress-select.pending { background: #fff3e0; color: #e65100; border-color: #ffa726; }
+        .progress-select.not-started { background: #ffebee; color: #c62828; border-color: #ef5350; }
+        .progress-select.in-progress { background: #e3f2fd; color: #1565c0; border-color: #42a5f5; }
+
+        .year-select-row { display: flex; gap: 12px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .year-select-row label { color: #880e4f; font-weight: bold; font-size: 0.9em; }
+        .year-select-row select { padding: 8px 14px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
+        .year-select-row select:focus { border-color: #e91e63; outline: none; }
+        .btn-save-all { background: linear-gradient(135deg, #880e4f, #ad1457); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: transform 0.2s; }
+        .btn-save-all:hover { transform: scale(1.02); }
+        .save-msg { font-size: 0.8em; color: #2e7d32; margin-left: 10px; display: none; }
+
+        .legend { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75em; color: #666; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-dot.submitted { background: #66bb6a; }
+        .legend-dot.pending { background: #ffa726; }
+        .legend-dot.in-progress { background: #42a5f5; }
+        .legend-dot.not-started { background: #ef5350; }
+
+        @media (max-width: 768px) {
+            .clock-time { font-size: 2em; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .data-table { font-size: 0.7em; }
+            .progress-select { padding: 4px 6px; font-size: 0.7em; }
+        }
     </style>
 </head>
 <body>
     <div class="admin-container">
-        <!-- Admin-only nav -->
+        <!-- Admin-only nav: NO SMS Logs -->
         <div class="nav-bar">
             <a href="admin-dashboard.html" class="active">Admin Panel</a>
             <a href="manage-users.html">Manage Teachers</a>
             <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -74,7 +97,7 @@
             <div class="admin-badge" id="adminName">ADMINISTRATOR</div>
         </div>
 
-        <!-- Stats: Teachers & Reports Overview -->
+        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="totalUsers">0</div>
@@ -89,12 +112,12 @@
                 <div class="stat-label">Admins</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalSMS">0</div>
-                <div class="stat-label">SMS Sent</div>
+                <div class="stat-value" id="submittedCount">0</div>
+                <div class="stat-label">Reports Submitted</div>
             </div>
         </div>
 
-        <!-- Quick Actions: Admin manages teachers and reports -->
+        <!-- Quick Actions -->
         <div class="admin-actions">
             <a href="manage-users.html" class="admin-action-btn">
                 <span class="action-icon">[+]</span>
@@ -106,14 +129,9 @@
                 <div class="action-title">SF2 Reports</div>
                 <div class="action-desc">View and download attendance reports</div>
             </a>
-            <a href="sms-logs.html" class="admin-action-btn">
-                <span class="action-icon">[M]</span>
-                <div class="action-title">SMS Logs</div>
-                <div class="action-desc">View all SMS notifications sent</div>
-            </a>
         </div>
 
-        <!-- Registered Teachers List -->
+        <!-- Registered Teachers -->
         <div class="section-box">
             <h2>Registered Teachers</h2>
             <div class="table-wrapper">
@@ -133,44 +151,47 @@
             </div>
         </div>
 
-        <!-- Teacher Activity: Recent attendance scans by teachers -->
+        <!-- SF2 Report Progress Tracker -->
         <div class="section-box">
-            <h2>Recent Teacher Activity (Attendance Scans)</h2>
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Student Scanned</th>
-                            <th>Date</th>
-                            <th>Time In</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="activityTableBody">
-                        <tr><td colspan="5" class="no-data">Loading activity...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <h2>SF2 Report Submission Progress</h2>
+            <p style="color:#888; font-size:0.8em; margin-bottom:15px;">Track whether each teacher has submitted their SF2 attendance report for each month. Use the dropdown to update the status.</p>
 
-        <!-- SMS Notification Summary -->
-        <div class="section-box">
-            <h2>Recent SMS Notifications</h2>
-            <div class="table-wrapper">
-                <table class="data-table">
+            <div class="year-select-row">
+                <label>School Year:</label>
+                <select id="schoolYear" onchange="loadProgress()">
+                    <option value="2026-2027" selected>2026-2027</option>
+                    <option value="2025-2026">2025-2026</option>
+                </select>
+                <button class="btn-save-all" onclick="saveAllProgress()">Save All Changes</button>
+                <span class="save-msg" id="saveMsg">Saved successfully!</span>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot submitted"></div> Submitted</div>
+                <div class="legend-item"><div class="legend-dot in-progress"></div> In Progress</div>
+                <div class="legend-item"><div class="legend-dot pending"></div> Pending</div>
+                <div class="legend-item"><div class="legend-dot not-started"></div> Not Started</div>
+            </div>
+
+            <div class="table-wrapper" style="overflow-x:auto;">
+                <table class="data-table" id="progressTable">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Student</th>
-                            <th>Phone</th>
-                            <th>Message</th>
-                            <th>Status</th>
-                            <th>Date</th>
+                            <th style="min-width:150px;">Teacher Name</th>
+                            <th>Jun</th>
+                            <th>Jul</th>
+                            <th>Aug</th>
+                            <th>Sep</th>
+                            <th>Oct</th>
+                            <th>Nov</th>
+                            <th>Dec</th>
+                            <th>Jan</th>
+                            <th>Feb</th>
+                            <th>Mar</th>
                         </tr>
                     </thead>
-                    <tbody id="smsTableBody">
-                        <tr><td colspan="6" class="no-data">Loading SMS logs...</td></tr>
+                    <tbody id="progressTableBody">
+                        <tr><td colspan="11" class="no-data">Loading progress...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -183,7 +204,6 @@
         if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        // Only admin can access
         if (!user || user.role !== 'admin') { window.location.href = 'dashboard.html'; }
 
         if (user && user.full_name) {
@@ -219,7 +239,10 @@
         updateClock();
         setInterval(updateClock, 1000);
 
-        // Load teachers/users
+        var teachersList = [];
+        var monthKeys = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar'];
+
+        // Load teachers
         async function loadTeachers() {
             try {
                 var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -228,14 +251,16 @@
                 var users = await response.json();
 
                 var teachers = 0; var admins = 0;
+                teachersList = [];
                 for (var i = 0; i < users.length; i++) {
-                    if (users[i].role === 'admin') admins++;
-                    else teachers++;
+                    if (users[i].role === 'admin') { admins++; }
+                    else { teachers++; teachersList.push(users[i]); }
                 }
                 document.getElementById('totalUsers').textContent = users.length;
                 document.getElementById('totalTeachers').textContent = teachers;
                 document.getElementById('totalAdmins').textContent = admins;
 
+                // Teachers table
                 var tbody = document.getElementById('teachersTableBody');
                 if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">No users found.</td></tr>'; return; }
                 var html = '';
@@ -245,54 +270,130 @@
                     html += '<tr><td>' + (u+1) + '</td><td>' + (usr.full_name || '-') + '</td><td>' + usr.username + '</td><td><span class="role-badge ' + roleClass + '">' + usr.role + '</span></td></tr>';
                 }
                 tbody.innerHTML = html;
+
+                // Load progress after teachers are loaded
+                loadProgress();
             } catch (err) { console.log('Load teachers error:', err); }
         }
 
-        // Load recent attendance activity
-        async function loadActivity() {
-            var tbody = document.getElementById('activityTableBody');
-            try {
-                var response = await fetch('/api/attendance/recent', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No recent activity.</td></tr>'; return; }
-                var records = await response.json();
-                if (!records || records.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet.</td></tr>'; return; }
-                var html = '';
-                for (var i = 0; i < records.length; i++) {
-                    var r = records[i];
-                    var name = r.student_name || (r.last_name + ', ' + r.first_name);
-                    var statusClass = r.status === 'Present' ? 'present' : (r.status === 'Late' ? 'late' : 'absent');
-                    html += '<tr><td>' + (i+1) + '</td><td>' + name + '</td><td>' + (r.date||'-') + '</td><td>' + (r.time_in||'-') + '</td><td><span class="status-badge ' + statusClass + '">' + r.status + '</span></td></tr>';
-                }
-                tbody.innerHTML = html;
-            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load activity.</td></tr>'; }
+        // Get progress key for localStorage
+        function getProgressKey() {
+            var sy = document.getElementById('schoolYear').value;
+            return 'sf2_progress_' + sy;
         }
 
-        // Load SMS logs
-        async function loadSMSLogs() {
-            var tbody = document.getElementById('smsTableBody');
-            try {
-                var response = await fetch('/api/sms', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No SMS logs yet.</td></tr>'; return; }
-                var logs = await response.json();
+        // Load progress from localStorage
+        function loadProgress() {
+            var key = getProgressKey();
+            var saved = {};
+            try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { saved = {}; }
 
-                document.getElementById('totalSMS').textContent = logs.length || 0;
+            var tbody = document.getElementById('progressTableBody');
 
-                if (!logs || logs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No SMS notifications sent yet.</td></tr>'; return; }
-                var html = '';
-                var limit = Math.min(logs.length, 10);
-                for (var i = 0; i < limit; i++) {
-                    var l = logs[i];
-                    var name = l.student_name || (l.last_name ? l.last_name + ', ' + l.first_name : 'Unknown');
-                    var statusClass = l.status === 'sent' ? 'present' : (l.status === 'mock' ? 'late' : 'absent');
-                    html += '<tr><td>' + (i+1) + '</td><td>' + name + '</td><td>' + (l.phone_number || 'N/A') + '</td><td style="max-width:200px; word-wrap:break-word;">' + (l.message || '-') + '</td><td><span class="status-badge ' + statusClass + '">' + l.status + '</span></td><td>' + (l.created_at || '-') + '</td></tr>';
+            if (teachersList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="no-data">No teachers registered yet. Add teachers in Manage Teachers.</td></tr>';
+                updateSubmittedCount(saved);
+                return;
+            }
+
+            var html = '';
+            for (var t = 0; t < teachersList.length; t++) {
+                var teacher = teachersList[t];
+                var teacherKey = teacher.username;
+                html += '<tr>';
+                html += '<td style="font-weight:bold; color:#880e4f; white-space:nowrap;">' + (teacher.full_name || teacher.username) + '</td>';
+
+                for (var m = 0; m < monthKeys.length; m++) {
+                    var cellKey = teacherKey + '_' + monthKeys[m];
+                    var currentStatus = (saved[cellKey]) || 'not-started';
+
+                    html += '<td>';
+                    html += '<select class="progress-select ' + currentStatus + '" ';
+                    html += 'data-key="' + cellKey + '" ';
+                    html += 'onchange="updateDropdownStyle(this)">';
+                    html += '<option value="not-started"' + (currentStatus === 'not-started' ? ' selected' : '') + '>Not Started</option>';
+                    html += '<option value="in-progress"' + (currentStatus === 'in-progress' ? ' selected' : '') + '>In Progress</option>';
+                    html += '<option value="pending"' + (currentStatus === 'pending' ? ' selected' : '') + '>Pending</option>';
+                    html += '<option value="submitted"' + (currentStatus === 'submitted' ? ' selected' : '') + '>Submitted</option>';
+                    html += '</select>';
+                    html += '</td>';
                 }
-                tbody.innerHTML = html;
-            } catch (err) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load SMS logs.</td></tr>'; }
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+            updateSubmittedCount(saved);
+        }
+
+        // Update dropdown color when changed
+        function updateDropdownStyle(el) {
+            el.className = 'progress-select ' + el.value;
+        }
+
+        // Save all progress to localStorage
+        function saveAllProgress() {
+            var key = getProgressKey();
+            var saved = {};
+            try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { saved = {}; }
+
+            var selects = document.querySelectorAll('.progress-select');
+            for (var i = 0; i < selects.length; i++) {
+                var dataKey = selects[i].getAttribute('data-key');
+                saved[dataKey] = selects[i].value;
+            }
+
+            localStorage.setItem(key, JSON.stringify(saved));
+
+            // Also save to server if available
+            saveProgressToServer(saved);
+
+            var msg = document.getElementById('saveMsg');
+            msg.style.display = 'inline';
+            setTimeout(function() { msg.style.display = 'none'; }, 3000);
+
+            updateSubmittedCount(saved);
+        }
+
+        // Try to save progress to server (so it persists across browsers)
+        async function saveProgressToServer(data) {
+            try {
+                var sy = document.getElementById('schoolYear').value;
+                await fetch('/api/sf2/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ school_year: sy, progress: data })
+                });
+            } catch (err) { /* silently fail - localStorage is backup */ }
+        }
+
+        // Try to load progress from server first
+        async function loadProgressFromServer() {
+            try {
+                var sy = document.getElementById('schoolYear').value;
+                var response = await fetch('/api/sf2/progress?school_year=' + sy, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    var data = await response.json();
+                    if (data && data.progress) {
+                        var key = getProgressKey();
+                        localStorage.setItem(key, JSON.stringify(data.progress));
+                    }
+                }
+            } catch (err) { /* use localStorage as fallback */ }
+            loadProgress();
+        }
+
+        // Count submitted reports
+        function updateSubmittedCount(saved) {
+            var count = 0;
+            var keys = Object.keys(saved);
+            for (var i = 0; i < keys.length; i++) {
+                if (saved[keys[i]] === 'submitted') count++;
+            }
+            document.getElementById('submittedCount').textContent = count;
         }
 
         loadTeachers();
-        loadActivity();
-        loadSMSLogs();
     </script>
 </body>
 </html>

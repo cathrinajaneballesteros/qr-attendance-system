@@ -38,12 +38,11 @@
 </head>
 <body>
     <div class="users-container">
-        <!-- Admin-only nav -->
+        <!-- Admin-only nav: NO SMS Logs -->
         <div class="nav-bar">
             <a href="admin-dashboard.html">Admin Panel</a>
             <a href="manage-users.html" class="active">Manage Teachers</a>
             <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -142,7 +141,6 @@
                     resultDiv.className = 'add-result success';
                     resultDiv.textContent = 'Teacher ' + fullName + ' added successfully!';
                     resultDiv.style.display = 'block';
-                    // Clear all fields after successful add
                     document.getElementById('fullName').value = '';
                     document.getElementById('username').value = '';
                     document.getElementById('password').value = '';
