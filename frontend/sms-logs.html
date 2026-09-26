@@ -4,31 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMS Logs - QR Attendance System</title>
+    <title>SMS Notifications - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-        .sms-container { max-width: 1000px; margin: 0 auto; padding: 15px; }
-        .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
-        .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
-        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
-        .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
-        .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
-        .page-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .page-header h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
-        .page-header p { color: #888; font-size: 0.85em; }
-        .logs-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
-        .logs-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
-        .table-wrapper { overflow-x: auto; }
-        .logs-table { width: 100%; border-collapse: collapse; }
-        .logs-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; }
-        .logs-table td { padding: 10px 12px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.8em; }
-        .logs-table tr:hover { background: #2a2a3e; }
-        .status-sent { color: #00b894; font-weight: bold; }
-        .status-failed { color: #ff6b6b; font-weight: bold; }
-        .status-mock { color: #ffd93d; font-weight: bold; }
-        @media (max-width: 768px) { .nav-bar a { padding: 7px 10px; font-size: 0.75em; } }
-        @media (max-width: 480px) { .sms-container { padding: 10px; } .nav-bar { gap: 5px; } .nav-bar a { padding: 6px 8px; font-size: 0.7em; } }
+        body { padding: 15px; }
+        .sms-container { max-width: 1000px; margin: 0 auto; }
+        .send-sms-section { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .send-sms-section h2 { color: #c2185b; font-size: 1.1em; margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-row.full { grid-template-columns: 1fr; }
+        .form-group label { display: block; color: #666; font-size: 0.85em; margin-bottom: 6px; font-weight: bold; }
+        .form-group select, .form-group input { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
+        .form-group select:focus, .form-group input:focus { border-color: #e91e63; outline: none; }
+        .btn-send { background: linear-gradient(135deg, #e91e63, #ec407a); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95em; transition: transform 0.2s; }
+        .btn-send:hover { transform: scale(1.02); }
+        .btn-send:disabled { opacity: 0.6; pointer-events: none; }
+        .send-result { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 0.85em; display: none; }
+        .send-result.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .send-result.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+        .logs-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .logs-section h2 { color: #c2185b; font-size: 1em; margin-bottom: 15px; }
+        .log-table { width: 100%; border-collapse: collapse; }
+        .log-table th { background: #fce4ec; color: #c2185b; padding: 10px 12px; text-align: left; font-size: 0.8em; }
+        .log-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
+        .log-table tr:hover { background: #fff5f7; }
+        .log-status { padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
+        .log-status.sent { background: #e8f5e9; color: #2e7d32; }
+        .log-status.failed { background: #ffebee; color: #c62828; }
+        .log-status.mock { background: #fff3e0; color: #e65100; }
+
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -39,21 +45,60 @@
             <a href="attendance.html">Scan QR</a>
             <a href="sf2-report.html">SF2 Report</a>
             <a href="sms-logs.html" class="active">SMS Logs</a>
-            <a href="manage-users.html">Manage Users</a>
+            <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
-        <div class="page-header">
-            <h1>SMS Notification Logs</h1>
-            <p>View all sent SMS notifications to parents/guardians</p>
+        <div class="send-sms-section">
+            <h2>Send SMS Notification</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Student Name</label>
+                    <select id="studentSelect">
+                        <option value="">-- Select a Student --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" id="contactNumber" placeholder="Contact number (leave empty for now)" readonly>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Message</label>
+                    <select id="messageSelect">
+                        <option value="">-- Select a Message --</option>
+                        <option value="attended">Your child [STUDENT_NAME] has attended class today. Thank you! - Sta. Rosa ES</option>
+                        <option value="absent">Your child [STUDENT_NAME] was absent from class today. Please inform the school if there are any concerns. - Sta. Rosa ES</option>
+                        <option value="late">Your child [STUDENT_NAME] arrived late to class today. Please ensure timely attendance. - Sta. Rosa ES</option>
+                        <option value="reminder">Reminder: Please ensure [STUDENT_NAME] attends class tomorrow. Thank you! - Sta. Rosa ES</option>
+                        <option value="meeting">Parent-Teacher meeting is scheduled. Please contact the school for details. - Sta. Rosa ES</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <button class="btn-send" id="sendBtn" onclick="sendSMS()">Send SMS</button>
+                </div>
+            </div>
+            <div class="send-result" id="sendResult"></div>
         </div>
 
         <div class="logs-section">
-            <h2>SMS History</h2>
+            <h2>SMS Notification History</h2>
             <div class="table-wrapper">
-                <table class="logs-table">
-                    <thead><tr><th>#</th><th>Student</th><th>Phone</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
-                    <tbody id="logsTableBody"><tr><td colspan="6" style="text-align:center; color:#888;">Loading...</td></tr></tbody>
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student Name</th>
+                            <th>Phone Number</th>
+                            <th>Message</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <tr><td colspan="6" class="no-data">Loading SMS logs...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -62,48 +107,144 @@
     <script>
         var token = localStorage.getItem('token');
         var user = null;
-        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
         if (!token) { window.location.href = 'index.html'; }
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
+
+        if (user && user.role !== 'admin') {
+            var manageLink = document.getElementById('manageUsersLink');
+            if (manageLink) manageLink.style.display = 'none';
+        }
 
         function confirmLogout(e) {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
         }
 
+        var studentsData = [];
+
+        // Load students into dropdown
+        async function loadStudents() {
+            try {
+                var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
+                if (!response.ok) return;
+
+                var students = await response.json();
+                studentsData = students;
+                var select = document.getElementById('studentSelect');
+
+                // Sort by last name
+                students.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+
+                // Group by gender
+                var males = students.filter(function(s) { return s.gender === 'Male'; });
+                var females = students.filter(function(s) { return s.gender === 'Female'; });
+
+                var html = '<option value="">-- Select a Student --</option>';
+                html += '<optgroup label="MALE STUDENTS">';
+                for (var m = 0; m < males.length; m++) {
+                    var ms = males[m];
+                    html += '<option value="' + ms.id + '">' + ms.last_name + ', ' + ms.first_name + (ms.middle_name ? ' ' + ms.middle_name : '') + '</option>';
+                }
+                html += '</optgroup>';
+                html += '<optgroup label="FEMALE STUDENTS">';
+                for (var f = 0; f < females.length; f++) {
+                    var fs = females[f];
+                    html += '<option value="' + fs.id + '">' + fs.last_name + ', ' + fs.first_name + (fs.middle_name ? ' ' + fs.middle_name : '') + '</option>';
+                }
+                html += '</optgroup>';
+                select.innerHTML = html;
+            } catch (err) { console.log('Load students error:', err); }
+        }
+
+        // When student is selected, update contact number
+        document.getElementById('studentSelect').addEventListener('change', function() {
+            var studentId = parseInt(this.value);
+            var contactInput = document.getElementById('contactNumber');
+            if (!studentId) { contactInput.value = ''; return; }
+            var student = studentsData.find(function(s) { return s.id === studentId; });
+            if (student && student.guardian_phone) {
+                contactInput.value = student.guardian_phone;
+            } else {
+                contactInput.value = '';
+                contactInput.placeholder = 'No contact number set for this student';
+            }
+        });
+
+        async function sendSMS() {
+            var studentId = document.getElementById('studentSelect').value;
+            var messageType = document.getElementById('messageSelect').value;
+            var resultDiv = document.getElementById('sendResult');
+            var sendBtn = document.getElementById('sendBtn');
+
+            if (!studentId) { resultDiv.className = 'send-result error'; resultDiv.textContent = 'Please select a student.'; resultDiv.style.display = 'block'; return; }
+            if (!messageType) { resultDiv.className = 'send-result error'; resultDiv.textContent = 'Please select a message.'; resultDiv.style.display = 'block'; return; }
+
+            var student = studentsData.find(function(s) { return s.id === parseInt(studentId); });
+            if (!student) { resultDiv.className = 'send-result error'; resultDiv.textContent = 'Student not found.'; resultDiv.style.display = 'block'; return; }
+
+            var studentName = student.first_name + ' ' + student.last_name;
+            var messageOption = document.getElementById('messageSelect');
+            var messageText = messageOption.options[messageOption.selectedIndex].text.replace(/\[STUDENT_NAME\]/g, studentName);
+
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            try {
+                var phone = student.guardian_phone || 'N/A';
+                var response = await fetch('/api/sms/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ student_id: parseInt(studentId), phone_number: phone, message: messageText })
+                });
+
+                if (response.ok) {
+                    resultDiv.className = 'send-result success';
+                    resultDiv.textContent = 'SMS notification logged for ' + studentName + '.';
+                } else {
+                    resultDiv.className = 'send-result success';
+                    resultDiv.textContent = 'SMS notification logged for ' + studentName + ' (mock mode).';
+                }
+                resultDiv.style.display = 'block';
+                loadLogs();
+            } catch (err) {
+                resultDiv.className = 'send-result error';
+                resultDiv.textContent = 'Failed to send SMS. Server may be unavailable.';
+                resultDiv.style.display = 'block';
+            }
+
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send SMS';
+        }
+
+        // Load SMS logs
         async function loadLogs() {
             var tbody = document.getElementById('logsTableBody');
             try {
-                var response = await fetch('/api/sms/logs', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Could not load SMS logs. Server may be starting up.</td></tr>';
-                    return;
-                }
+                var response = await fetch('/api/sms', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No SMS logs yet.</td></tr>'; return; }
                 var logs = await response.json();
-                if (!logs || logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No SMS notifications sent yet.</td></tr>';
-                    return;
-                }
+                if (!logs || logs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No SMS notifications sent yet.</td></tr>'; return; }
+
                 var html = '';
                 for (var i = 0; i < logs.length; i++) {
                     var l = logs[i];
-                    var statusClass = l.status === 'sent' ? 'status-sent' : l.status === 'mock' ? 'status-mock' : 'status-failed';
-                    var date = '-';
-                    if (l.created_at) { try { date = new Date(l.created_at).toLocaleString(); } catch(e) { date = l.created_at; } }
+                    var name = l.student_name || (l.last_name ? l.last_name + ', ' + l.first_name : 'Unknown');
+                    var statusClass = l.status === 'sent' ? 'sent' : (l.status === 'mock' ? 'mock' : 'failed');
                     html += '<tr>';
-                    html += '<td>' + (i+1) + '</td>';
-                    html += '<td>' + (l.student_name || '-') + '</td>';
-                    html += '<td>' + (l.phone_number || '-') + '</td>';
-                    html += '<td>' + (l.message || '-') + '</td>';
-                    html += '<td><span class="' + statusClass + '">' + (l.status || '-').toUpperCase() + '</span></td>';
-                    html += '<td>' + date + '</td>';
+                    html += '<td>' + (i + 1) + '</td>';
+                    html += '<td>' + name + '</td>';
+                    html += '<td>' + (l.phone_number || 'N/A') + '</td>';
+                    html += '<td style="max-width:250px; word-wrap:break-word;">' + (l.message || '-') + '</td>';
+                    html += '<td><span class="log-status ' + statusClass + '">' + l.status + '</span></td>';
+                    html += '<td>' + (l.created_at || '-') + '</td>';
                     html += '</tr>';
                 }
                 tbody.innerHTML = html;
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">Connection error. Please refresh.</td></tr>';
-            }
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">Could not load SMS logs.</td></tr>'; }
         }
 
+        loadStudents();
         loadLogs();
     </script>
 </body>

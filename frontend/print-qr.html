@@ -4,49 +4,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print QR Code ID Cards</title>
+    <title>Download QR Code ID Cards</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; padding: 20px; }
-
+        body { padding: 20px; }
         .screen-header { text-align: center; margin-bottom: 20px; }
-        .screen-header h1 { color: #00b894; font-size: 1.5em; margin-bottom: 5px; }
+        .screen-header h1 { color: #c2185b; font-size: 1.5em; margin-bottom: 5px; }
         .screen-header p { color: #888; font-size: 0.85em; margin-bottom: 15px; }
 
         .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
         .btn { padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { transform: scale(1.03); }
-        .btn-print { background: linear-gradient(135deg, #00b894, #00cec9); color: white; }
-        .btn-back { background: #2a2a3e; color: #ccc; }
-        .btn-back:hover { background: #3a3a4e; }
+        .btn-download { background: linear-gradient(135deg, #e91e63, #ec407a); color: white; }
+        .btn-back { background: #fce4ec; color: #c2185b; }
+        .btn-back:hover { background: #f8bbd0; }
+        .btn-download-single { background: #fce4ec; color: #c2185b; border: 1px solid #f8bbd0; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7em; margin-top: 6px; transition: all 0.2s; }
+        .btn-download-single:hover { background: #e91e63; color: white; }
 
         .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 900px; margin: 0 auto; }
 
-        .id-card { background: white; border-radius: 12px; padding: 15px 12px; text-align: center; border: 2px solid #00b894; position: relative; overflow: hidden; }
-        .id-card .card-top { background: linear-gradient(135deg, #00b894, #00cec9); color: white; padding: 8px 10px; margin: -15px -12px 12px -12px; font-size: 0.6em; font-weight: bold; }
+        .id-card { background: white; border-radius: 12px; padding: 15px 12px; text-align: center; border: 2px solid #e91e63; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(219,112,147,0.15); }
+        .id-card .card-top { background: linear-gradient(135deg, #e91e63, #ec407a); color: white; padding: 8px 10px; margin: -15px -12px 12px -12px; font-size: 0.6em; font-weight: bold; }
         .id-card .card-top .school-name { font-size: 1.1em; margin-bottom: 2px; }
         .id-card .card-top .section-name { font-weight: normal; opacity: 0.9; font-size: 0.9em; }
         .id-card .qr-wrapper { margin: 8px auto; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; }
         .id-card .qr-wrapper img { display: block; margin: 0 auto; width: 130px; height: 130px; }
-        .id-card .student-name { font-weight: bold; color: #1a1a2e; font-size: 0.7em; margin-top: 8px; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
+        .id-card .student-name { font-weight: bold; color: #333; font-size: 0.7em; margin-top: 8px; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
         .id-card .student-gender { font-size: 0.6em; color: #888; margin-top: 4px; }
-        .id-card .student-number { position: absolute; top: 42px; left: 8px; background: #1a1a2e; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.55em; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        .id-card .card-bottom { background: #f0f0f0; color: #666; padding: 5px; margin: 10px -12px -15px -12px; font-size: 0.5em; }
+        .id-card .student-number { position: absolute; top: 42px; left: 8px; background: #c2185b; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.55em; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .id-card .card-bottom { background: #fce4ec; color: #c2185b; padding: 5px; margin: 10px -12px -15px -12px; font-size: 0.5em; }
 
-        .gender-separator { grid-column: 1 / -1; text-align: center; padding: 10px; color: #00b894; font-weight: bold; font-size: 0.9em; border-bottom: 2px solid #333; margin: 5px 0; }
+        .gender-separator { grid-column: 1 / -1; text-align: center; padding: 10px; color: #c2185b; font-weight: bold; font-size: 0.9em; border-bottom: 2px solid #fce4ec; margin: 5px 0; }
 
-        .no-data { text-align: center; color: #888; padding: 40px; font-size: 1em; }
-        .loading { text-align: center; color: #00b894; padding: 40px; font-size: 1em; }
+        .loading { text-align: center; color: #c2185b; padding: 40px; font-size: 1em; }
 
         @media print {
-            body { background: white; color: black; padding: 5mm; }
-            .screen-header, .btn-group { display: none; }
+            body { background: white; padding: 5mm; }
+            .screen-header, .btn-group, .btn-download-single { display: none; }
             .cards-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 100%; }
-            .id-card { border: 1.5px solid #00b894; border-radius: 8px; padding: 10px 8px; page-break-inside: avoid; }
-            .id-card .card-top { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 6px 8px; margin: -10px -8px 8px -8px; }
-            .id-card .card-bottom { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 8px -8px -10px -8px; }
-            .id-card .student-number { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .gender-separator { -webkit-print-color-adjust: exact; print-color-adjust: exact; color: black; font-size: 0.8em; }
+            .id-card { page-break-inside: avoid; }
+            .id-card .card-top, .id-card .card-bottom, .id-card .student-number { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             @page { size: A4 portrait; margin: 5mm; }
         }
 
@@ -56,13 +53,14 @@
 </head>
 <body>
     <div class="screen-header">
-        <h1>QR Code ID Cards</h1>
-        <p>Sta. Rosa Elementary School - Grade 6 Great Geniuses | S.Y. 2025-2026</p>
+        <h1>Download QR Code ID Cards</h1>
+        <p>Sta. Rosa Elementary School - Grade 6 Great Geniuses | S.Y. 2026-2027</p>
     </div>
 
     <div class="btn-group">
         <a href="dashboard.html" class="btn btn-back">Back to Dashboard</a>
-        <button class="btn btn-print" onclick="window.print()">Print All ID Cards</button>
+        <button class="btn btn-download" onclick="downloadAllQR()">Download All QR Codes</button>
+        <button class="btn btn-download" onclick="window.print()">Print All ID Cards</button>
     </div>
 
     <div id="cardsContainer">
@@ -73,74 +71,43 @@
         var token = localStorage.getItem('token');
         if (!token) { window.location.href = 'index.html'; }
 
-        // QR Code generator using Google Charts API (always works, no library needed)
+        var allStudentData = [];
+
         function getQRImageURL(text, size) {
             return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
         }
 
         async function loadAndGenerateCards() {
             var container = document.getElementById('cardsContainer');
-
             try {
-                var response = await fetch('/api/students', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-
-                if (response.status === 401) {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                if (!response.ok) {
-                    container.innerHTML = '<div class="no-data">Could not load students. Please refresh the page.</div>';
-                    return;
-                }
+                var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
+                if (!response.ok) { container.innerHTML = '<div class="no-data">Could not load students. Please refresh.</div>'; return; }
 
                 var students = await response.json();
+                if (!students || students.length === 0) { container.innerHTML = '<div class="no-data">No students found. Add students first.</div>'; return; }
 
-                if (!students || students.length === 0) {
-                    container.innerHTML = '<div class="no-data">No students found. Add students first.</div>';
-                    return;
-                }
-
-                var males = [];
-                var females = [];
+                var males = []; var females = [];
                 for (var i = 0; i < students.length; i++) {
-                    if (students[i].gender === 'Male') males.push(students[i]);
-                    else females.push(students[i]);
+                    if (students[i].gender === 'Male') males.push(students[i]); else females.push(students[i]);
                 }
-
                 males.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
                 females.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+                allStudentData = males.concat(females);
 
                 var html = '<div class="cards-grid">';
-
-                // Male students
                 html += '<div class="gender-separator">MALE STUDENTS (' + males.length + ')</div>';
-                for (var m = 0; m < males.length; m++) {
-                    html += createCardHTML(males[m], m + 1);
-                }
-
-                // Female students
+                for (var m = 0; m < males.length; m++) { html += createCardHTML(males[m], m + 1); }
                 html += '<div class="gender-separator">FEMALE STUDENTS (' + females.length + ')</div>';
-                for (var f = 0; f < females.length; f++) {
-                    html += createCardHTML(females[f], f + 1);
-                }
-
+                for (var f = 0; f < females.length; f++) { html += createCardHTML(females[f], f + 1); }
                 html += '</div>';
                 container.innerHTML = html;
-
-            } catch (err) {
-                console.error('Error:', err);
-                container.innerHTML = '<div class="no-data">Connection error. Server may be starting up. Please refresh.</div>';
-            }
+            } catch (err) { container.innerHTML = '<div class="no-data">Connection error. Server may be starting up. Please refresh.</div>'; }
         }
 
         function createCardHTML(student, number) {
             var fullName = student.last_name + ', ' + student.first_name;
             if (student.middle_name) fullName += ' ' + student.middle_name;
-
             var qrText = student.qr_code || (student.first_name + ' ' + student.last_name);
             var qrImageUrl = getQRImageURL(qrText, 150);
 
@@ -148,17 +115,41 @@
             card += '<div class="id-card">';
             card += '  <div class="card-top">';
             card += '    <div class="school-name">STA. ROSA ELEMENTARY SCHOOL</div>';
-            card += '    <div class="section-name">Grade 6 - Great Geniuses | S.Y. 2025-2026</div>';
+            card += '    <div class="section-name">Grade 6 - Great Geniuses | S.Y. 2026-2027</div>';
             card += '  </div>';
             card += '  <div class="student-number">' + number + '</div>';
             card += '  <div class="qr-wrapper">';
-            card += '    <img src="' + qrImageUrl + '" alt="QR Code for ' + fullName + '" width="130" height="130">';
+            card += '    <img src="' + qrImageUrl + '" alt="QR Code for ' + fullName + '" width="130" height="130" crossorigin="anonymous" id="qr-img-' + student.id + '">';
             card += '  </div>';
             card += '  <div class="student-name">' + fullName + '</div>';
             card += '  <div class="student-gender">' + student.gender + '</div>';
+            card += '  <button class="btn-download-single" onclick="downloadSingleQR(\'' + qrText.replace(/'/g, "\\'") + '\', \'' + fullName.replace(/'/g, "\\'") + '\')">Download QR</button>';
             card += '  <div class="card-bottom">QR Attendance System</div>';
             card += '</div>';
             return card;
+        }
+
+        function downloadSingleQR(qrText, studentName) {
+            var url = getQRImageURL(qrText, 300);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'QR_' + studentName.replace(/[^a-zA-Z0-9]/g, '_') + '.png';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadAllQR() {
+            if (allStudentData.length === 0) { alert('No students loaded yet.'); return; }
+            for (var i = 0; i < allStudentData.length; i++) {
+                var s = allStudentData[i];
+                var qrText = s.qr_code || (s.first_name + ' ' + s.last_name);
+                var fullName = s.last_name + ', ' + s.first_name;
+                (function(text, name, delay) {
+                    setTimeout(function() { downloadSingleQR(text, name); }, delay);
+                })(qrText, fullName, i * 300);
+            }
         }
 
         loadAndGenerateCards();
