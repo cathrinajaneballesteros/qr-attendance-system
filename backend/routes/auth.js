@@ -1,140 +1,139 @@
 
-var express = require('express');
-var router = express.Router();
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
-var db = require('../database/db');
-var auth = require('../middleware/auth');
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const auth = require('../middleware/auth');
 
-var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2025';
+var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2026';
 
-// POST login
+// LOGIN
 router.post('/login', function(req, res) {
     try {
-        var username = req.body.username;
-        var password = req.body.password;
+        var db = req.app.get('db');
+        var username = (req.body.username || '').trim();
+        var password = req.body.password || '';
 
-        console.log('=== LOGIN DEBUG ===');
+        console.log('=== LOGIN ATTEMPT ===');
         console.log('Username:', username);
 
         if (!username || !password) {
-            return res.status(400).json({ error: 'Username and password are required.' });
+            return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        var user = db.get('SELECT * FROM users WHERE username = ?', [username]);
-        console.log('User found:', user ? 'YES' : 'NO');
+        var user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
         if (!user) {
-            return res.status(401).json({ error: 'Invalid username or password.' });
+            console.log('User not found:', username);
+            return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        var passwordValid = bcrypt.compareSync(password, user.password);
-        console.log('Password valid:', passwordValid);
-        console.log('===================');
+        var validPassword = bcrypt.compareSync(password, user.password);
+        console.log('Password valid:', validPassword);
 
-        if (!passwordValid) {
-            return res.status(401).json({ error: 'Invalid username or password.' });
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Invalid username or password' });
         }
 
+        // Create token with SAME secret used in middleware
         var token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role },
+            { id: user.id, username: user.username, role: user.role, full_name: user.full_name },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
+
+        console.log('Login successful for:', username, 'role:', user.role);
+        console.log('Token created with secret:', JWT_SECRET.substring(0, 10) + '...');
 
         res.json({
             token: token,
             user: {
                 id: user.id,
                 username: user.username,
-                full_name: user.full_name,
-                role: user.role
+                role: user.role,
+                full_name: user.full_name
             }
         });
-    } catch (err) {
-        console.error('Login error:', err);
-        res.status(500).json({ error: 'Server error during login.' });
+    } catch (error) {
+        console.log('Login error:', error.message);
+        res.status(500).json({ error: 'Server error during login' });
     }
 });
 
-// POST register (admin only)
-router.post('/register', function(req, res) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided.' });
-    }
+// REGISTER (admin only)
+router.post('/register', auth, function(req, res) {
     try {
-        var token = authHeader.split(' ')[1];
-        var decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ error: 'Only admins can register new users.' });
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can register users' });
         }
 
-        var username = req.body.username;
-        var password = req.body.password;
-        var fullName = req.body.full_name;
+        var db = req.app.get('db');
+        var fullName = (req.body.full_name || '').trim();
+        var username = (req.body.username || '').trim();
+        var password = req.body.password || '';
         var role = req.body.role || 'teacher';
 
-        if (!username || !password || !fullName) {
-            return res.status(400).json({ error: 'Username, password, and full name are required.' });
+        if (!fullName || !username || !password) {
+            return res.status(400).json({ error: 'All fields are required' });
         }
 
-        var existing = db.get('SELECT id FROM users WHERE username = ?', [username]);
+        var existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
         if (existing) {
-            return res.status(400).json({ error: 'Username already exists.' });
+            return res.status(400).json({ error: 'Username already exists' });
         }
 
-        var hash = bcrypt.hashSync(password, 10);
-        db.run('INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)', [username, hash, fullName, role]);
+        var hashedPassword = bcrypt.hashSync(password, 10);
+        var result = db.prepare('INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)').run(fullName, username, hashedPassword, role);
 
-        res.status(201).json({ message: 'User ' + username + ' created successfully.' });
-    } catch (err) {
-        console.error('Register error:', err);
-        res.status(500).json({ error: 'Failed to register user.' });
+        console.log('User registered:', username, 'role:', role);
+        res.json({ message: 'User registered successfully', id: result.lastInsertRowid });
+    } catch (error) {
+        console.log('Register error:', error.message);
+        res.status(500).json({ error: 'Server error during registration' });
     }
 });
 
-// GET all users (admin only)
-router.get('/users', function(req, res) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided.' });
-    }
+// GET ALL USERS (admin only)
+router.get('/users', auth, function(req, res) {
     try {
-        var token = authHeader.split(' ')[1];
-        var decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ error: 'Only admins can view users.' });
+        console.log('GET /users called by:', req.user.username, 'role:', req.user.role);
+
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view users' });
         }
-        var users = db.all('SELECT id, username, full_name, role, created_at FROM users ORDER BY created_at DESC', []);
+
+        var db = req.app.get('db');
+        var users = db.prepare('SELECT id, full_name, username, role FROM users ORDER BY id').all();
+
+        console.log('Returning', users.length, 'users');
         res.json(users);
-    } catch (err) {
-        console.error('Get users error:', err);
-        res.status(500).json({ error: 'Failed to load users.' });
+    } catch (error) {
+        console.log('Get users error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-// DELETE user (admin only)
-router.delete('/users/:id', function(req, res) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided.' });
-    }
+// DELETE USER (admin only)
+router.delete('/users/:id', auth, function(req, res) {
     try {
-        var token = authHeader.split(' ')[1];
-        var decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ error: 'Only admins can delete users.' });
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can delete users' });
         }
-        var userId = parseInt(req.params.id);
-        if (userId === decoded.id) {
-            return res.status(400).json({ error: 'You cannot delete your own account.' });
+
+        var db = req.app.get('db');
+        var userId = req.params.id;
+
+        var user = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
+        if (user && user.username === 'admin') {
+            return res.status(400).json({ error: 'Cannot delete default admin' });
         }
-        db.run('DELETE FROM users WHERE id = ?', [userId]);
-        res.json({ message: 'User deleted successfully.' });
-    } catch (err) {
-        console.error('Delete user error:', err);
-        res.status(500).json({ error: 'Failed to delete user.' });
+
+        db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+        console.log('User deleted, id:', userId);
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.log('Delete user error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
