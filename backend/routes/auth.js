@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
 
-var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2026';
+var JWT_SECRET = 'qr-attendance-secret-key-2026';
 
 // LOGIN
 router.post('/login', function(req, res) {
@@ -14,8 +14,7 @@ router.post('/login', function(req, res) {
         var username = (req.body.username || '').trim();
         var password = req.body.password || '';
 
-        console.log('=== LOGIN ATTEMPT ===');
-        console.log('Username:', username);
+        console.log('LOGIN:', username);
 
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
@@ -29,21 +28,19 @@ router.post('/login', function(req, res) {
         }
 
         var validPassword = bcrypt.compareSync(password, user.password);
-        console.log('Password valid:', validPassword);
 
         if (!validPassword) {
+            console.log('Wrong password for:', username);
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        // Create token with SAME secret used in middleware
         var token = jwt.sign(
             { id: user.id, username: user.username, role: user.role, full_name: user.full_name },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        console.log('Login successful for:', username, 'role:', user.role);
-        console.log('Token created with secret:', JWT_SECRET.substring(0, 10) + '...');
+        console.log('Login OK:', username, 'role:', user.role);
 
         res.json({
             token: token,
@@ -85,7 +82,7 @@ router.post('/register', auth, function(req, res) {
         var hashedPassword = bcrypt.hashSync(password, 10);
         var result = db.prepare('INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)').run(fullName, username, hashedPassword, role);
 
-        console.log('User registered:', username, 'role:', role);
+        console.log('Registered:', username, 'role:', role);
         res.json({ message: 'User registered successfully', id: result.lastInsertRowid });
     } catch (error) {
         console.log('Register error:', error.message);
@@ -96,7 +93,7 @@ router.post('/register', auth, function(req, res) {
 // GET ALL USERS (admin only)
 router.get('/users', auth, function(req, res) {
     try {
-        console.log('GET /users called by:', req.user.username, 'role:', req.user.role);
+        console.log('GET /users by:', req.user.username, req.user.role);
 
         if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Only admins can view users' });
@@ -129,7 +126,7 @@ router.delete('/users/:id', auth, function(req, res) {
         }
 
         db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-        console.log('User deleted, id:', userId);
+        console.log('Deleted user id:', userId);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         console.log('Delete user error:', error.message);

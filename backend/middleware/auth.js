@@ -1,6 +1,8 @@
 
 const jwt = require('jsonwebtoken');
 
+var JWT_SECRET = 'qr-attendance-secret-key-2026';
+
 function auth(req, res, next) {
     try {
         var authHeader = req.headers['authorization'] || req.headers['Authorization'] || '';
@@ -17,19 +19,17 @@ function auth(req, res, next) {
             return res.status(401).json({ error: 'No token provided' });
         }
 
-        var secret = process.env.JWT_SECRET || 'qr-attendance-secret-key-2026';
-
-        jwt.verify(token, secret, function(err, decoded) {
+        jwt.verify(token, JWT_SECRET, function(err, decoded) {
             if (err) {
-                console.log('AUTH: Token verification failed:', err.message);
+                console.log('AUTH: Token failed:', err.message);
                 return res.status(401).json({ error: 'Invalid or expired token' });
             }
-            console.log('AUTH: Token valid for user:', decoded.username, 'role:', decoded.role);
+            console.log('AUTH: OK -', decoded.username, decoded.role);
             req.user = decoded;
             next();
         });
     } catch (error) {
-        console.log('AUTH: Unexpected error:', error.message);
+        console.log('AUTH: Error:', error.message);
         return res.status(401).json({ error: 'Authentication failed' });
     }
 }
