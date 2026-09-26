@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard - QR Attendance System</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .clock-section { background: linear-gradient(135deg, #e91e63, #ec407a); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(233,30,99,0.3); }
+        .clock-time { font-size: 2.8em; font-weight: bold; letter-spacing: 3px; font-family: 'Courier New', monospace; }
+        .clock-date { font-size: 1em; margin-top: 5px; opacity: 0.9; }
+        .clock-label { font-size: 0.75em; margin-top: 8px; opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; }
+        @media (max-width: 480px) { .clock-time { font-size: 2em; } .clock-date { font-size: 0.85em; } }
+    </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -17,6 +24,13 @@
             <a href="sms-logs.html">SMS Logs</a>
             <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
+        </div>
+
+        <!-- Real-Time Clock -->
+        <div class="clock-section">
+            <div class="clock-time" id="clockTime">--:--:-- --</div>
+            <div class="clock-date" id="clockDate">Loading...</div>
+            <div class="clock-label">Philippine Standard Time (UTC+8)</div>
         </div>
 
         <div class="welcome-section">
@@ -118,6 +132,34 @@
         if (user && user.full_name) {
             document.getElementById('userInfo').textContent = 'Welcome, ' + user.full_name + ' (' + (user.role || 'user') + ')';
         } else { document.getElementById('userInfo').textContent = 'Welcome!'; }
+
+        // REAL-TIME CLOCK - Philippine Time
+        function updateClock() {
+            var now = new Date();
+            // Convert to Philippine Time (UTC+8)
+            var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            var pht = new Date(utc + (8 * 3600000));
+
+            var hours = pht.getHours();
+            var minutes = pht.getMinutes();
+            var seconds = pht.getSeconds();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            var displayHours = hours % 12;
+            if (displayHours === 0) displayHours = 12;
+
+            var timeStr = (displayHours < 10 ? '0' : '') + displayHours + ':' +
+                          (minutes < 10 ? '0' : '') + minutes + ':' +
+                          (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
+
+            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var dateStr = days[pht.getDay()] + ', ' + months[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
+
+            document.getElementById('clockTime').textContent = timeStr;
+            document.getElementById('clockDate').textContent = dateStr;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
 
         async function loadSummary() {
             try {

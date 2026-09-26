@@ -13,6 +13,34 @@ function checkAuth(req) {
     } catch (e) { return null; }
 }
 
+// Get Philippine Time
+function getPHTime() {
+    var now = new Date();
+    var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    return new Date(utc + (8 * 3600000));
+}
+
+function getPHTimeString() {
+    var pht = getPHTime();
+    var hours = pht.getHours();
+    var minutes = pht.getMinutes();
+    var seconds = pht.getSeconds();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    var displayHours = hours % 12;
+    if (displayHours === 0) displayHours = 12;
+    return (displayHours < 10 ? '0' : '') + displayHours + ':' +
+           (minutes < 10 ? '0' : '') + minutes + ':' +
+           (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
+}
+
+function getPHDateString() {
+    var pht = getPHTime();
+    var year = pht.getFullYear();
+    var month = (pht.getMonth() + 1 < 10 ? '0' : '') + (pht.getMonth() + 1);
+    var day = (pht.getDate() < 10 ? '0' : '') + pht.getDate();
+    return year + '-' + month + '-' + day;
+}
+
 router.get('/recent', function(req, res) {
     var user = checkAuth(req);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -29,8 +57,8 @@ router.get('/', function(req, res) {
     var user = checkAuth(req);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     try {
-        var date = req.query.date || new Date().toISOString().split('T')[0];
-        var records = db.all("SELECT a.*, s.first_name, s.last_name, s.middle_name, (s.last_name || ', ' || s.first_name) as student_name FROM attendance a JOIN students s ON a.student_id = s.id WHERE a.date = ? ORDER BY s.last_name ASC", [date]);
+        var date = req.query.date || getPHDateString();
+        var records = db.all("SELECT a.*, s.first_name, s.last_name, s.middle_name, (s.last_name || ', ' || s.first_name) as student_name FROM attendance a JOIN students s ON a.student_id = s.id WHERE a.date = ? ORDER BY a.time_in ASC", [date]);
         res.json(records);
     } catch (err) {
         console.error('Get attendance error:', err);
@@ -44,9 +72,8 @@ router.post('/', function(req, res) {
     try {
         var studentId = parseInt(req.body.student_id);
         var status = req.body.status || 'Present';
-        var date = req.body.date || new Date().toISOString().split('T')[0];
-        var now = new Date();
-        var timeIn = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        var date = getPHDateString();
+        var timeIn = getPHTimeString();
 
         if (!studentId) return res.status(400).json({ error: 'Student ID is required' });
 
@@ -58,8 +85,10 @@ router.post('/', function(req, res) {
 
         db.run('INSERT INTO attendance (student_id, date, status, time_in, recorded_by) VALUES (?, ?, ?, ?, ?)', [studentId, date, status, timeIn, user.id]);
 
+        // Log SMS
         if (student.guardian_phone) {
-            var message = 'QRAttend: ' + student.first_name + ' ' + student.last_name + ' was marked ' + status + ' on ' + date + ' at ' + timeIn + '. - Sta. Rosa ES';
+            var statusMsg = status === 'Present' ? 'has attended class' : (status === 'Late' ? 'arrived late to class' : 'was absent from class');
+            var message = 'QRAttend: ' + student.first_name + ' ' + student.last_name + ' ' + statusMsg + ' today (' + date + ') at ' + timeIn + '. - Sta. Rosa ES';
             db.run('INSERT INTO sms_logs (student_id, phone_number, message, status, provider) VALUES (?, ?, ?, ?, ?)', [studentId, student.guardian_phone, message, 'mock', 'mock']);
         }
 
@@ -80,17 +109,17 @@ router.post('/scan', function(req, res) {
         var student = db.get('SELECT * FROM students WHERE qr_code = ?', [qrCode]);
         if (!student) return res.status(404).json({ error: 'Student not found for QR code: ' + qrCode });
 
-        var date = new Date().toISOString().split('T')[0];
-        var now = new Date();
-        var timeIn = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        var date = getPHDateString();
+        var timeIn = getPHTimeString();
 
         var existing = db.get('SELECT id FROM attendance WHERE student_id = ? AND date = ?', [student.id, date]);
-        if (existing) return res.status(400).json({ error: student.first_name + ' ' + student.last_name + ' already recorded today.' });
+        if (existing) return res.status(400).json({ error: student.first_name + ' ' + student.last_name + ' already recorded today at ' + existing.time_in + '.' });
 
         db.run('INSERT INTO attendance (student_id, date, status, time_in, recorded_by) VALUES (?, ?, ?, ?, ?)', [student.id, date, 'Present', timeIn, user.id]);
 
+        // Log SMS with time
         if (student.guardian_phone) {
-            var message = 'QRAttend: ' + student.first_name + ' ' + student.last_name + ' was marked Present on ' + date + ' at ' + timeIn + '. - Sta. Rosa ES';
+            var message = 'QRAttend: ' + student.first_name + ' ' + student.last_name + ' has attended class today (' + date + ') at ' + timeIn + '. - Sta. Rosa ES';
             db.run('INSERT INTO sms_logs (student_id, phone_number, message, status, provider) VALUES (?, ?, ?, ?, ?)', [student.id, student.guardian_phone, message, 'mock', 'mock']);
         }
 
