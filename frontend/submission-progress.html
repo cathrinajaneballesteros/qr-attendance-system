@@ -147,13 +147,25 @@
     </div>
 
     <script>
+        // CHECK TOKEN - but do NOT auto-redirect on API errors
         var token = localStorage.getItem('token');
         var user = null;
-        if (!token) { window.location.href = 'index.html'; }
-        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        // Only admin can access
-        if (!user || user.role !== 'admin') { window.location.href = 'dashboard.html'; }
+        // Only redirect if there is NO token at all
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        try {
+            user = JSON.parse(localStorage.getItem('user') || '{}');
+        } catch(e) {
+            user = {};
+        }
+
+        // Only redirect if user role is clearly not admin
+        if (user && user.role && user.role !== 'admin') {
+            window.location.href = 'dashboard.html';
+        }
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -166,12 +178,20 @@
         var teachersList = [];
         var monthKeys = ['jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar'];
 
-        // Load teachers from API
+        // Load teachers from API - DO NOT redirect on 401
         async function loadTeachers() {
             try {
-                var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
-                if (!response.ok) return;
+                var response = await fetch('/api/auth/users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                // If 401, do NOT redirect - just show message
+                if (!response.ok) {
+                    console.log('Could not load teachers, status:', response.status);
+                    document.getElementById('progressTableBody').innerHTML = '<tr><td colspan="11" class="no-data">Could not load teachers. Please try refreshing the page.</td></tr>';
+                    return;
+                }
+
                 var users = await response.json();
 
                 teachersList = [];
@@ -183,7 +203,10 @@
                 document.getElementById('totalTeachers').textContent = teachersList.length;
 
                 loadProgress();
-            } catch (err) { console.log('Load teachers error:', err); }
+            } catch (err) {
+                console.log('Load teachers error:', err);
+                document.getElementById('progressTableBody').innerHTML = '<tr><td colspan="11" class="no-data">Connection error. Please refresh the page.</td></tr>';
+            }
         }
 
         function getProgressKey() {
