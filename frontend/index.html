@@ -9,7 +9,6 @@
     <style>
         body { margin: 0; padding: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .login-container { background: white; padding: 40px 35px; border-radius: 16px; box-shadow: 0 10px 40px rgba(233,30,99,0.15); width: 100%; max-width: 380px; text-align: center; }
-        .login-logo { margin-bottom: 8px; }
         .login-logo h1 { font-size: 1.8em; color: #333; margin: 0; }
         .login-logo h1 span { color: #e91e63; }
         .login-subtitle { color: #888; font-size: 0.8em; margin-bottom: 5px; }
@@ -37,25 +36,31 @@
 
         <div class="error-msg" id="errorMsg"></div>
 
-        <form onsubmit="handleLogin(event)">
+        <form onsubmit="handleLogin(event)" autocomplete="off">
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" id="username" placeholder="Enter username" required autocomplete="off">
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="Enter password" required autocomplete="off">
+                <input type="password" id="password" placeholder="Enter password" required autocomplete="new-password">
             </div>
             <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
         </form>
     </div>
 
     <script>
-        // Clear any stored data on login page load (security)
+        // Clear ALL stored data when login page loads (security)
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 
-        // Make sure fields are empty on page load
+        // Force clear input fields on page load
+        window.addEventListener('load', function() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        });
+
+        // Also clear on DOMContentLoaded
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
 
@@ -89,7 +94,6 @@
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
 
-                    // Redirect based on role
                     if (data.user.role === 'admin') {
                         window.location.href = 'admin-dashboard.html';
                     } else {
@@ -98,7 +102,6 @@
                 } else {
                     errorMsg.textContent = data.error || 'Invalid username or password.';
                     errorMsg.style.display = 'block';
-                    // Clear password field on failed login
                     document.getElementById('password').value = '';
                 }
             } catch (err) {

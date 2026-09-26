@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Manage Users - QR Attendance System</title>
+    <title>Manage Teachers - QR Attendance System</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
         body { padding: 15px; }
@@ -41,26 +41,26 @@
         <!-- Admin-only nav -->
         <div class="nav-bar">
             <a href="admin-dashboard.html">Admin Panel</a>
-            <a href="manage-users.html" class="active">Manage Users</a>
+            <a href="manage-users.html" class="active">Manage Teachers</a>
             <a href="sf2-report.html">SF2 Report</a>
             <a href="sms-logs.html">SMS Logs</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
         <div class="add-section">
-            <h2>Add New Teacher / User</h2>
+            <h2>Add New Teacher</h2>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Full Name</label>
-                    <input type="text" id="fullName" required>
+                    <input type="text" id="fullName" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" id="username" required>
+                    <input type="text" id="username" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="password" required>
+                    <input type="text" id="password" autocomplete="new-password" value="">
                 </div>
                 <div class="form-group">
                     <label>Role</label>
@@ -70,12 +70,12 @@
                     </select>
                 </div>
             </div>
-            <button class="btn-add" onclick="addUser()">Add User</button>
+            <button class="btn-add" onclick="addUser()">Add Teacher</button>
             <div class="add-result" id="addResult"></div>
         </div>
 
         <div class="list-section">
-            <h2>All Registered Users</h2>
+            <h2>All Registered Teachers</h2>
             <div class="table-wrapper">
                 <table class="user-table">
                     <thead>
@@ -88,7 +88,7 @@
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="5" class="no-data">Loading users...</td></tr>
+                        <tr><td colspan="5" class="no-data">Loading teachers...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -102,6 +102,14 @@
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
         if (!user || user.role !== 'admin') { window.location.href = 'dashboard.html'; }
+
+        // Force clear all input fields on page load
+        window.addEventListener('load', function() {
+            document.getElementById('fullName').value = '';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('role').value = 'teacher';
+        });
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -132,8 +140,9 @@
                 var data = await response.json();
                 if (response.ok) {
                     resultDiv.className = 'add-result success';
-                    resultDiv.textContent = 'User ' + fullName + ' added successfully!';
+                    resultDiv.textContent = 'Teacher ' + fullName + ' added successfully!';
                     resultDiv.style.display = 'block';
+                    // Clear all fields after successful add
                     document.getElementById('fullName').value = '';
                     document.getElementById('username').value = '';
                     document.getElementById('password').value = '';
@@ -141,7 +150,7 @@
                     loadUsers();
                 } else {
                     resultDiv.className = 'add-result error';
-                    resultDiv.textContent = data.error || 'Failed to add user.';
+                    resultDiv.textContent = data.error || 'Failed to add teacher.';
                     resultDiv.style.display = 'block';
                 }
             } catch (err) {
@@ -156,9 +165,9 @@
             try {
                 var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
                 if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
-                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load users.</td></tr>'; return; }
+                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load teachers.</td></tr>'; return; }
                 var users = await response.json();
-                if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No users found.</td></tr>'; return; }
+                if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No teachers found.</td></tr>'; return; }
 
                 var html = '';
                 for (var i = 0; i < users.length; i++) {
@@ -179,18 +188,18 @@
                     html += '</tr>';
                 }
                 tbody.innerHTML = html;
-            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load users.</td></tr>'; }
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load teachers.</td></tr>'; }
         }
 
         async function deleteUser(id, name) {
-            if (!confirm('Are you sure you want to delete user: ' + name + '?')) return;
+            if (!confirm('Are you sure you want to delete: ' + name + '?')) return;
             try {
                 var response = await fetch('/api/auth/users/' + id, {
                     method: 'DELETE',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (response.ok) { loadUsers(); }
-                else { alert('Failed to delete user.'); }
+                else { alert('Failed to delete teacher.'); }
             } catch (err) { alert('Connection error.'); }
         }
 
