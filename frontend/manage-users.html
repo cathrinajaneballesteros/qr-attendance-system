@@ -38,11 +38,11 @@
 </head>
 <body>
     <div class="users-container">
-        <!-- Admin nav: matches admin-dashboard -->
+        <!-- Admin nav -->
         <div class="nav-bar">
             <a href="admin-dashboard.html">Admin Panel</a>
             <a href="manage-users.html" class="active">Manage Teachers</a>
-            <a href="admin-dashboard.html#progressSection">SF2 Submission Progress</a>
+            <a href="sf2-progress.html">SF2 Submission Progress</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -102,7 +102,6 @@
 
         if (!user || user.role !== 'admin') { window.location.href = 'dashboard.html'; }
 
-        // Force clear all input fields on page load
         window.addEventListener('load', function() {
             document.getElementById('fullName').value = '';
             document.getElementById('username').value = '';
