@@ -38,11 +38,11 @@
 </head>
 <body>
     <div class="users-container">
-        <!-- Admin-only nav: NO SMS Logs -->
+        <!-- Admin nav: matches admin-dashboard -->
         <div class="nav-bar">
             <a href="admin-dashboard.html">Admin Panel</a>
             <a href="manage-users.html" class="active">Manage Teachers</a>
-            <a href="sf2-report.html">SF2 Report</a>
+            <a href="admin-dashboard.html#progressSection">SF2 Submission Progress</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -59,7 +59,7 @@
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="text" id="password" autocomplete="new-password" value="">
+                    <input type="text" id="password" autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label>Role</label>

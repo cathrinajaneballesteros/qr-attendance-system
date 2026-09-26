@@ -42,7 +42,6 @@
         .role-badge.admin { background: #fce4ec; color: #880e4f; }
         .role-badge.teacher { background: #e3f2fd; color: #1565c0; }
 
-        /* Progress dropdown styles */
         .progress-select { padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: bold; cursor: pointer; border: 2px solid; outline: none; transition: all 0.2s; }
         .progress-select.submitted { background: #e8f5e9; color: #2e7d32; border-color: #66bb6a; }
         .progress-select.pending { background: #fff3e0; color: #e65100; border-color: #ffa726; }
@@ -75,11 +74,11 @@
 </head>
 <body>
     <div class="admin-container">
-        <!-- Admin-only nav: NO SMS Logs -->
+        <!-- Admin nav: SF2 Report replaced with SF2 Submission Progress -->
         <div class="nav-bar">
             <a href="admin-dashboard.html" class="active">Admin Panel</a>
             <a href="manage-users.html">Manage Teachers</a>
-            <a href="sf2-report.html">SF2 Report</a>
+            <a href="#progressSection" onclick="scrollToProgress()">SF2 Submission Progress</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
@@ -124,10 +123,10 @@
                 <div class="action-title">Manage Teachers</div>
                 <div class="action-desc">Add, view, or remove teacher accounts</div>
             </a>
-            <a href="sf2-report.html" class="admin-action-btn">
+            <a href="#progressSection" onclick="scrollToProgress()" class="admin-action-btn">
                 <span class="action-icon">[#]</span>
-                <div class="action-title">SF2 Reports</div>
-                <div class="action-desc">View and download attendance reports</div>
+                <div class="action-title">SF2 Submission Progress</div>
+                <div class="action-desc">Track teacher report submissions per month</div>
             </a>
         </div>
 
@@ -151,9 +150,9 @@
             </div>
         </div>
 
-        <!-- SF2 Report Progress Tracker -->
-        <div class="section-box">
-            <h2>SF2 Report Submission Progress</h2>
+        <!-- SF2 Report Submission Progress Tracker -->
+        <div class="section-box" id="progressSection">
+            <h2>SF2 Submission Progress</h2>
             <p style="color:#888; font-size:0.8em; margin-bottom:15px;">Track whether each teacher has submitted their SF2 attendance report for each month. Use the dropdown to update the status.</p>
 
             <div class="year-select-row">
@@ -218,6 +217,10 @@
             }
         }
 
+        function scrollToProgress() {
+            document.getElementById('progressSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
         // REAL-TIME CLOCK
         function updateClock() {
             var now = new Date();
@@ -260,7 +263,6 @@
                 document.getElementById('totalTeachers').textContent = teachers;
                 document.getElementById('totalAdmins').textContent = admins;
 
-                // Teachers table
                 var tbody = document.getElementById('teachersTableBody');
                 if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">No users found.</td></tr>'; return; }
                 var html = '';
@@ -271,18 +273,15 @@
                 }
                 tbody.innerHTML = html;
 
-                // Load progress after teachers are loaded
                 loadProgress();
             } catch (err) { console.log('Load teachers error:', err); }
         }
 
-        // Get progress key for localStorage
         function getProgressKey() {
             var sy = document.getElementById('schoolYear').value;
             return 'sf2_progress_' + sy;
         }
 
-        // Load progress from localStorage
         function loadProgress() {
             var key = getProgressKey();
             var saved = {};
@@ -324,12 +323,10 @@
             updateSubmittedCount(saved);
         }
 
-        // Update dropdown color when changed
         function updateDropdownStyle(el) {
             el.className = 'progress-select ' + el.value;
         }
 
-        // Save all progress to localStorage
         function saveAllProgress() {
             var key = getProgressKey();
             var saved = {};
@@ -342,8 +339,6 @@
             }
 
             localStorage.setItem(key, JSON.stringify(saved));
-
-            // Also save to server if available
             saveProgressToServer(saved);
 
             var msg = document.getElementById('saveMsg');
@@ -353,7 +348,6 @@
             updateSubmittedCount(saved);
         }
 
-        // Try to save progress to server (so it persists across browsers)
         async function saveProgressToServer(data) {
             try {
                 var sy = document.getElementById('schoolYear').value;
@@ -362,28 +356,9 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ school_year: sy, progress: data })
                 });
-            } catch (err) { /* silently fail - localStorage is backup */ }
+            } catch (err) { /* localStorage is backup */ }
         }
 
-        // Try to load progress from server first
-        async function loadProgressFromServer() {
-            try {
-                var sy = document.getElementById('schoolYear').value;
-                var response = await fetch('/api/sf2/progress?school_year=' + sy, {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (response.ok) {
-                    var data = await response.json();
-                    if (data && data.progress) {
-                        var key = getProgressKey();
-                        localStorage.setItem(key, JSON.stringify(data.progress));
-                    }
-                }
-            } catch (err) { /* use localStorage as fallback */ }
-            loadProgress();
-        }
-
-        // Count submitted reports
         function updateSubmittedCount(saved) {
             var count = 0;
             var keys = Object.keys(saved);
