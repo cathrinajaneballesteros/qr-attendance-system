@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Dashboard - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { padding: 15px; }
+        .admin-container { max-width: 1000px; margin: 0 auto; }
+
+        .clock-section { background: linear-gradient(135deg, #880e4f, #ad1457); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(136,14,79,0.3); }
+        .clock-time { font-size: 2.8em; font-weight: bold; letter-spacing: 3px; font-family: 'Courier New', monospace; }
+        .clock-date { font-size: 1em; margin-top: 5px; opacity: 0.9; }
+        .clock-label { font-size: 0.75em; margin-top: 8px; opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; }
+
+        .welcome-section { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .welcome-section h1 { color: #880e4f; font-size: 1.4em; margin: 0 0 5px 0; }
+        .welcome-section p { color: #888; font-size: 0.85em; margin: 3px 0; }
+        .welcome-section .admin-badge { display: inline-block; background: #880e4f; color: white; padding: 3px 15px; border-radius: 15px; font-size: 0.75em; font-weight: bold; margin-top: 8px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(219,112,147,0.1); border-top: 3px solid #e91e63; }
+        .stat-card .stat-value { font-size: 2em; font-weight: bold; color: #880e4f; }
+        .stat-card .stat-label { font-size: 0.75em; color: #888; margin-top: 5px; }
+
+        .admin-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .admin-action-btn { display: block; background: #fff; padding: 25px 20px; border-radius: 12px; text-align: center; text-decoration: none; color: #333; box-shadow: 0 2px 10px rgba(219,112,147,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 2px solid #fce4ec; }
+        .admin-action-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(233,30,99,0.15); border-color: #e91e63; }
+        .admin-action-btn .action-icon { font-size: 2em; display: block; margin-bottom: 10px; color: #e91e63; }
+        .admin-action-btn .action-title { font-weight: bold; font-size: 0.95em; color: #880e4f; }
+        .admin-action-btn .action-desc { font-size: 0.75em; color: #999; margin-top: 5px; }
+
+        .users-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); margin-bottom: 15px; }
+        .users-section h2 { color: #880e4f; font-size: 1.1em; margin-bottom: 15px; }
+        .user-table { width: 100%; border-collapse: collapse; }
+        .user-table th { background: #fce4ec; color: #c2185b; padding: 10px 12px; text-align: left; font-size: 0.8em; }
+        .user-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
+        .user-table tr:hover { background: #fff5f7; }
+        .role-badge { padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: bold; }
+        .role-badge.admin { background: #fce4ec; color: #880e4f; }
+        .role-badge.teacher { background: #e3f2fd; color: #1565c0; }
+
+        .activity-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .activity-section h2 { color: #880e4f; font-size: 1em; margin-bottom: 15px; }
+        .activity-table { width: 100%; border-collapse: collapse; }
+        .activity-table th { background: #fce4ec; color: #c2185b; padding: 10px 12px; text-align: left; font-size: 0.8em; }
+        .activity-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
+
+        @media (max-width: 480px) { .clock-time { font-size: 2em; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="nav-bar">
+            <a href="admin-dashboard.html" class="active">Admin Panel</a>
+            <a href="manage-users.html">Manage Users</a>
+            <a href="sf2-report.html">SF2 Report</a>
+            <a href="sms-logs.html">SMS Logs</a>
+            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
+        </div>
+
+        <!-- Real-Time Clock -->
+        <div class="clock-section">
+            <div class="clock-time" id="clockTime">--:--:-- --</div>
+            <div class="clock-date" id="clockDate">Loading...</div>
+            <div class="clock-label">Philippine Standard Time (UTC+8)</div>
+        </div>
+
+        <div class="welcome-section">
+            <h1>Admin Control Panel</h1>
+            <p>QR Attendance System - Sta. Rosa Elementary School</p>
+            <p>Grade 6 - Great Geniuses | S.Y. 2026-2027</p>
+            <div class="admin-badge" id="adminName">ADMINISTRATOR</div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTeachers">0</div>
+                <div class="stat-label">Teachers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAdmins">0</div>
+                <div class="stat-label">Admins</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalStudents">0</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="todayPresent">0</div>
+                <div class="stat-label">Present Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="attendanceRate">0%</div>
+                <div class="stat-label">Attendance Rate</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="admin-actions">
+            <a href="manage-users.html" class="admin-action-btn">
+                <span class="action-icon">[+]</span>
+                <div class="action-title">Manage Users</div>
+                <div class="action-desc">Add, edit, or remove teacher accounts</div>
+            </a>
+            <a href="sf2-report.html" class="admin-action-btn">
+                <span class="action-icon">[#]</span>
+                <div class="action-title">SF2 Reports</div>
+                <div class="action-desc">View and download attendance reports</div>
+            </a>
+            <a href="sms-logs.html" class="admin-action-btn">
+                <span class="action-icon">[M]</span>
+                <div class="action-title">SMS Logs</div>
+                <div class="action-desc">View all SMS notifications sent</div>
+            </a>
+        </div>
+
+        <!-- Registered Users -->
+        <div class="users-section">
+            <h2>Registered Users</h2>
+            <div class="table-wrapper">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="4" class="no-data">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-section">
+            <h2>Recent Attendance Activity</h2>
+            <div class="table-wrapper">
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student Name</th>
+                            <th>Date</th>
+                            <th>Time In</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTableBody">
+                        <tr><td colspan="5" class="no-data">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var token = localStorage.getItem('token');
+        var user = null;
+        if (!token) { window.location.href = 'index.html'; }
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
+
+        // Only admin can access
+        if (!user || user.role !== 'admin') {
+            window.location.href = 'dashboard.html';
+        }
+
+        if (user && user.full_name) {
+            document.getElementById('adminName').textContent = 'ADMIN: ' + user.full_name.toUpperCase();
+        }
+
+        function confirmLogout(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        }
+
+        // REAL-TIME CLOCK
+        function updateClock() {
+            var now = new Date();
+            var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            var pht = new Date(utc + (8 * 3600000));
+            var hours = pht.getHours();
+            var minutes = pht.getMinutes();
+            var seconds = pht.getSeconds();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            var displayHours = hours % 12;
+            if (displayHours === 0) displayHours = 12;
+            var timeStr = (displayHours < 10 ? '0' : '') + displayHours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
+            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var dateStr = days[pht.getDay()] + ', ' + monthNames[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
+            document.getElementById('clockTime').textContent = timeStr;
+            document.getElementById('clockDate').textContent = dateStr;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Load users
+        async function loadUsers() {
+            try {
+                var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
+                if (!response.ok) return;
+                var users = await response.json();
+
+                var teachers = 0; var admins = 0;
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].role === 'admin') admins++;
+                    else teachers++;
+                }
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalTeachers').textContent = teachers;
+                document.getElementById('totalAdmins').textContent = admins;
+
+                var tbody = document.getElementById('usersTableBody');
+                if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">No users found.</td></tr>'; return; }
+                var html = '';
+                for (var u = 0; u < users.length; u++) {
+                    var usr = users[u];
+                    var roleClass = usr.role === 'admin' ? 'admin' : 'teacher';
+                    html += '<tr><td>' + (u+1) + '</td><td>' + (usr.full_name || '-') + '</td><td>' + usr.username + '</td><td><span class="role-badge ' + roleClass + '">' + usr.role + '</span></td></tr>';
+                }
+                tbody.innerHTML = html;
+            } catch (err) { console.log('Load users error:', err); }
+        }
+
+        // Load summary stats
+        async function loadSummary() {
+            try {
+                var response = await fetch('/api/sf2/summary', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!response.ok) return;
+                var data = await response.json();
+                document.getElementById('totalStudents').textContent = data.total_students || 0;
+                document.getElementById('todayPresent').textContent = data.today_present || 0;
+                document.getElementById('attendanceRate').textContent = (data.attendance_rate || '0') + '%';
+            } catch (err) { console.log('Summary error:', err); }
+        }
+
+        // Load recent activity
+        async function loadActivity() {
+            var tbody = document.getElementById('activityTableBody');
+            try {
+                var response = await fetch('/api/attendance/recent', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No recent activity.</td></tr>'; return; }
+                var records = await response.json();
+                if (!records || records.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No attendance records yet.</td></tr>'; return; }
+                var html = '';
+                for (var i = 0; i < records.length; i++) {
+                    var r = records[i];
+                    var name = r.student_name || (r.last_name + ', ' + r.first_name);
+                    var statusClass = r.status === 'Present' ? 'present' : (r.status === 'Late' ? 'late' : 'absent');
+                    html += '<tr><td>' + (i+1) + '</td><td>' + name + '</td><td>' + (r.date||'-') + '</td><td>' + (r.time_in||'-') + '</td><td><span class="status-badge ' + statusClass + '">' + r.status + '</span></td></tr>';
+                }
+                tbody.innerHTML = html;
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load activity.</td></tr>'; }
+        }
+
+        loadUsers();
+        loadSummary();
+        loadActivity();
+    </script>
+</body>
+</html>
+
