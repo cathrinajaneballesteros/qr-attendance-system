@@ -30,6 +30,7 @@
         .manual-section h2 { color: #c2185b; font-size: 1em; margin-bottom: 15px; }
         .manual-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
         .manual-form .form-group { flex: 1; min-width: 200px; }
+        .manual-form .form-group label { display: block; color: #666; font-size: 0.8em; margin-bottom: 5px; font-weight: bold; }
         .manual-form select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
         .manual-form select:focus { border-color: #e91e63; outline: none; }
 
@@ -64,15 +65,7 @@
 </head>
 <body>
     <div class="attendance-container">
-        <div class="nav-bar">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="students.html">Students</a>
-            <a href="attendance.html" class="active">Scan QR</a>
-            <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
-            <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
+        <div class="nav-bar" id="navBar"></div>
 
         <!-- Real-Time Clock -->
         <div class="clock-section">
@@ -162,10 +155,22 @@
         if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        if (user && user.role !== 'admin') {
-            var manageLink = document.getElementById('manageUsersLink');
-            if (manageLink) manageLink.style.display = 'none';
+        // Role-based nav
+        function buildNav() {
+            var nav = document.getElementById('navBar');
+            var html = '';
+            html += '<a href="dashboard.html">Dashboard</a>';
+            html += '<a href="students.html">Students</a>';
+            html += '<a href="attendance.html" class="active">Scan QR</a>';
+            html += '<a href="sf2-report.html">SF2 Report</a>';
+            html += '<a href="sms-logs.html">SMS Logs</a>';
+            if (user && user.role === 'admin') {
+                html += '<a href="manage-users.html">Manage Users</a>';
+            }
+            html += '<a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>';
+            nav.innerHTML = html;
         }
+        buildNav();
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -193,8 +198,8 @@
                           (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
 
             var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            var dateStr = days[pht.getDay()] + ', ' + months[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
+            var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var dateStr = days[pht.getDay()] + ', ' + monthNames[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
 
             document.getElementById('clockTime').textContent = timeStr;
             document.getElementById('clockDate').textContent = dateStr;
@@ -300,6 +305,7 @@
         async function loadStudentsDropdown() {
             try {
                 var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
                 if (!response.ok) return;
                 var students = await response.json();
                 var select = document.getElementById('manualStudent');

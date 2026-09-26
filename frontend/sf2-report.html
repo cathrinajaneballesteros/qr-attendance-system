@@ -5,292 +5,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SF2 Report - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-        .sf2-container { max-width: 1400px; margin: 0 auto; padding: 15px; }
+        body { padding: 15px; }
+        .sf2-container { max-width: 1100px; margin: 0 auto; }
+        .controls-section { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .controls-section h2 { color: #c2185b; font-size: 1.1em; margin-bottom: 15px; }
+        .controls-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .controls-row .form-group { min-width: 120px; }
+        .controls-row .form-group label { display: block; color: #666; font-size: 0.8em; margin-bottom: 5px; font-weight: bold; }
+        .controls-row .form-group select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
+        .controls-row .form-group select:focus { border-color: #e91e63; outline: none; }
+        .btn-generate { background: linear-gradient(135deg, #e91e63, #ec407a); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        .btn-generate:hover { transform: scale(1.02); }
+        .btn-download { background: #fce4ec; color: #c2185b; border: 1px solid #f8bbd0; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-decoration: none; display: inline-block; }
+        .btn-download:hover { background: #f8bbd0; }
 
-        .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
-        .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
-        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
-        .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
-        .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
+        .report-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); overflow-x: auto; }
+        .sf2-header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #fce4ec; }
+        .sf2-header h2 { color: #c2185b; font-size: 1.1em; margin-bottom: 3px; }
+        .sf2-header p { color: #666; font-size: 0.8em; margin: 2px 0; }
+        .sf2-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 0.8em; }
+        .sf2-info div { color: #555; }
+        .sf2-info span { font-weight: bold; color: #333; }
 
-        .sf2-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .sf2-header h1 { font-size: 1.3em; margin-bottom: 5px; color: #00b894; }
-        .sf2-header p { opacity: 0.8; font-size: 0.85em; }
+        .sf2-table { width: 100%; border-collapse: collapse; font-size: 0.7em; }
+        .sf2-table th { background: #fce4ec; color: #c2185b; padding: 6px 4px; text-align: center; border: 1px solid #f8bbd0; font-size: 0.85em; }
+        .sf2-table td { padding: 4px 3px; border: 1px solid #fce4ec; text-align: center; color: #555; }
+        .sf2-table .name-cell { text-align: left; padding-left: 8px; white-space: nowrap; min-width: 180px; }
+        .sf2-table .gender-header { background: #fce4ec; color: #c2185b; font-weight: bold; text-align: left; padding-left: 8px; }
+        .sf2-table .present-mark { color: #2e7d32; font-weight: bold; }
+        .sf2-table .absent-mark { color: #c62828; font-weight: bold; }
+        .sf2-table .weekend { background: #f5f5f5; }
+        .sf2-table .total-col { background: #fff5f7; font-weight: bold; }
 
-        .sf2-controls { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px; padding: 18px; background: #1e1e2e; border-radius: 12px; }
-        .sf2-controls label { color: #ccc; font-size: 0.85em; }
-        .sf2-controls select { padding: 10px 15px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
-        .btn-generate { padding: 10px 22px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; }
-        .btn-generate:hover { transform: scale(1.03); }
-        .btn-download { padding: 10px 22px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; }
-        .btn-download:hover { transform: scale(1.03); }
+        .summary-section { margin-top: 20px; padding: 15px; background: #fff5f7; border-radius: 10px; border: 1px solid #fce4ec; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .summary-item { text-align: center; }
+        .summary-item .value { font-size: 1.3em; font-weight: bold; color: #c2185b; }
+        .summary-item .label { font-size: 0.75em; color: #888; }
 
-        .report-section { background: #1e1e2e; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-        .report-title { text-align: center; margin-bottom: 15px; }
-        .report-title h2 { font-size: 1.1em; color: #00b894; margin-bottom: 3px; }
-        .report-title p { color: #888; font-size: 0.8em; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #fce4ec; }
+        .sig-block { text-align: center; }
+        .sig-block .sig-label { font-size: 0.75em; color: #888; margin-bottom: 30px; }
+        .sig-block .sig-name { font-weight: bold; color: #333; font-size: 0.9em; border-top: 1px solid #333; padding-top: 5px; display: inline-block; }
+        .sig-block .sig-title { font-size: 0.75em; color: #666; }
 
-        .report-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 15px; }
-        .info-item { display: flex; justify-content: space-between; padding: 8px 12px; background: #2a2a3e; border-radius: 6px; }
-        .info-item .label { color: #888; font-size: 0.8em; }
-        .info-item .value { color: #00b894; font-weight: bold; font-size: 0.8em; }
-
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; }
-        .sf2-table { width: 100%; border-collapse: collapse; font-size: 0.7em; min-width: 800px; }
-        .sf2-table th { background: #16213e; color: #00b894; padding: 6px 4px; border: 1px solid #333; text-align: center; white-space: nowrap; position: sticky; top: 0; }
-        .sf2-table td { padding: 5px 4px; border: 1px solid #333; text-align: center; color: #ddd; }
-        .sf2-table .name-cell { text-align: left; padding-left: 8px; white-space: nowrap; min-width: 200px; font-weight: 500; }
-        .sf2-table .absent-mark { color: #ff6b6b; font-weight: bold; }
-        .sf2-table .late-mark { color: #ffd93d; font-weight: bold; }
-        .sf2-table .total-row { background: #16213e; }
-        .sf2-table .total-row td { color: #00b894; font-weight: bold; }
-        .sf2-table .gender-header { background: #0d6efd22; }
-        .sf2-table .gender-header td { color: #74b9ff; font-weight: bold; text-align: center; font-size: 1.1em; padding: 8px; }
-
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 15px; }
-        .summary-card { background: #2a2a3e; padding: 15px; border-radius: 10px; text-align: center; }
-        .summary-card .number { font-size: 1.5em; font-weight: bold; color: #00b894; }
-        .summary-card .label { color: #888; font-size: 0.8em; margin-top: 5px; }
-        .summary-card.male .number { color: #74b9ff; }
-        .summary-card.female .number { color: #fd79a8; }
-        .summary-card.absent-card .number { color: #ff6b6b; }
-        .summary-card.rate-card .number { color: #ffd93d; }
-
-        .signatures { display: flex; justify-content: space-around; margin-top: 25px; padding: 20px; background: #2a2a3e; border-radius: 10px; flex-wrap: wrap; gap: 30px; }
-        .sig-block { text-align: center; min-width: 200px; }
-        .sig-block .sig-label { color: #888; font-size: 0.8em; margin-bottom: 30px; }
-        .sig-block .sig-name { font-weight: bold; color: white; border-bottom: 2px solid #00b894; padding-bottom: 5px; margin-bottom: 5px; }
-        .sig-block .sig-title { color: #888; font-size: 0.85em; }
-
-        .no-data { text-align: center; padding: 40px; color: #888; }
-        .loading { text-align: center; padding: 40px; color: #888; }
-
-        @media (max-width: 768px) {
-            .sf2-controls { flex-direction: column; }
-            .summary-grid { grid-template-columns: repeat(2, 1fr); }
-            .nav-bar a { padding: 7px 10px; font-size: 0.75em; }
-        }
-        @media (max-width: 480px) {
-            .sf2-container { padding: 10px; }
-            .sf2-table { font-size: 0.6em; }
-            .nav-bar { gap: 5px; padding: 10px; }
-            .nav-bar a { padding: 6px 8px; font-size: 0.7em; }
-            .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-            .signatures { flex-direction: column; align-items: center; }
-        }
+        @media (max-width: 768px) { .sf2-info { grid-template-columns: 1fr; } .controls-row { flex-direction: column; } .signatures { grid-template-columns: 1fr; gap: 20px; } }
     </style>
 </head>
 <body>
     <div class="sf2-container">
-        <div class="nav-bar">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="students.html">Students</a>
-            <a href="attendance.html">Scan QR</a>
-            <a href="sf2-report.html" class="active">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
-            <a href="manage-users.html">Manage Users</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
+        <div class="nav-bar" id="navBar"></div>
 
-        <div class="sf2-header">
-            <h1>School Form 2 (SF2)</h1>
-            <p>Daily Attendance Report of Learners</p>
-        </div>
-
-        <div class="sf2-controls">
-            <div>
-                <label>Month: </label>
-                <select id="monthSelect">
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
+        <div class="controls-section">
+            <h2>School Form 2 (SF2) Daily Attendance Report</h2>
+            <div class="controls-row">
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="monthSelect">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <select id="yearSelect">
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                    </select>
+                </div>
+                <button class="btn-generate" onclick="generateReport()">Generate Report</button>
+                <button class="btn-download" onclick="downloadReport()">Download .xlsx</button>
             </div>
-            <div>
-                <label>Year: </label>
-                <select id="yearSelect">
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                    <option value="2027">2027</option>
-                </select>
-            </div>
-            <button class="btn-generate" onclick="generateReport()">Generate Report</button>
-            <button class="btn-download" onclick="downloadExcel()">Download Excel (.xlsx)</button>
         </div>
 
-        <div id="reportContent">
-            <div class="no-data">Select a month and year, then click "Generate Report" to view the SF2 attendance report.</div>
+        <div class="report-section" id="reportSection">
+            <div class="no-data">Select a month and year, then click "Generate Report".</div>
         </div>
     </div>
 
     <script>
         var token = localStorage.getItem('token');
-        if (!token) window.location.href = 'index.html';
+        var user = null;
+        if (!token) { window.location.href = 'index.html'; }
+        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        // Set default month/year to current
-        var now = new Date();
-        document.getElementById('monthSelect').value = now.getMonth() + 1;
-        document.getElementById('yearSelect').value = now.getFullYear();
+        // Build nav - NO Manage Users on SF2 page
+        function buildNav() {
+            var nav = document.getElementById('navBar');
+            var html = '';
+            html += '<a href="dashboard.html">Dashboard</a>';
+            html += '<a href="students.html">Students</a>';
+            html += '<a href="attendance.html">Scan QR</a>';
+            html += '<a href="sf2-report.html" class="active">SF2 Report</a>';
+            html += '<a href="sms-logs.html">SMS Logs</a>';
+            if (user && user.role === 'admin') {
+                html += '<a href="manage-users.html">Manage Users</a>';
+            }
+            html += '<a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>';
+            nav.innerHTML = html;
+        }
+        buildNav();
 
         function confirmLogout(e) {
             e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            }
+            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
         }
+
+        // Set current month
+        var now = new Date();
+        document.getElementById('monthSelect').value = now.getMonth() + 1;
+
+        var months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
         async function generateReport() {
             var month = document.getElementById('monthSelect').value;
             var year = document.getElementById('yearSelect').value;
-            var content = document.getElementById('reportContent');
-            content.innerHTML = '<div class="loading">Generating SF2 report...</div>';
+            var section = document.getElementById('reportSection');
+            section.innerHTML = '<div class="no-data">Generating report...</div>';
 
             try {
                 var response = await fetch('/api/sf2/report?month=' + month + '&year=' + year, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
 
-                if (!response.ok) throw new Error('Failed to fetch report');
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
+                if (!response.ok) { section.innerHTML = '<div class="no-data">Failed to generate report. Please try again.</div>'; return; }
+
                 var data = await response.json();
                 renderReport(data);
             } catch (err) {
-                content.innerHTML = '<div class="no-data" style="color:#ff6b6b;">Failed to generate report. Make sure the server is running.</div>';
-                console.error('Report error:', err);
+                section.innerHTML = '<div class="no-data">Connection error. Server may be starting up.</div>';
             }
         }
 
         function renderReport(data) {
-            var content = document.getElementById('reportContent');
-            var days = data.school_days;
-            var dayNames = ['SUN', 'M', 'T', 'W', 'TH', 'F', 'SAT'];
+            var section = document.getElementById('reportSection');
+            var html = '';
 
-            // Build day headers
-            var dayHeaders = '';
-            var dayNameHeaders = '';
-            days.forEach(function(day) {
-                var date = new Date(data.year, data.month_num - 1, day);
-                var dn = dayNames[date.getDay()];
-                dayHeaders += '<th>' + day + '</th>';
-                dayNameHeaders += '<th>' + dn + '</th>';
-            });
-
-            // Build male rows
-            var maleRows = '';
-            var maleNum = 1;
-            data.male_students.forEach(function(s) {
-                maleRows += '<tr><td>' + maleNum + '</td><td class="name-cell">' + s.name + '</td>';
-                days.forEach(function(day) {
-                    var val = s.daily[day] || '';
-                    var cls = '';
-                    if (val === 'X') cls = 'absent-mark';
-                    else if (val === 'L') cls = 'late-mark';
-                    maleRows += '<td class="' + cls + '">' + val + '</td>';
-                });
-                maleRows += '<td>' + s.total_absent + '</td><td>' + s.total_present + '</td></tr>';
-                maleNum++;
-            });
-
-            // Male total row
-            maleRows += '<tr class="total-row"><td>' + data.male_count + '</td><td class="name-cell">&lt;=== MALE | TOTAL Per Day ===&gt;</td>';
-            days.forEach(function(day) {
-                maleRows += '<td>' + (data.male_daily_totals[day] || 0) + '</td>';
-            });
-            maleRows += '<td>' + data.male_total_absent + '</td><td>' + data.male_total_present + '</td></tr>';
-
-            // Build female rows
-            var femaleRows = '';
-            var femaleNum = 1;
-            data.female_students.forEach(function(s) {
-                femaleRows += '<tr><td>' + femaleNum + '</td><td class="name-cell">' + s.name + '</td>';
-                days.forEach(function(day) {
-                    var val = s.daily[day] || '';
-                    var cls = '';
-                    if (val === 'X') cls = 'absent-mark';
-                    else if (val === 'L') cls = 'late-mark';
-                    femaleRows += '<td class="' + cls + '">' + val + '</td>';
-                });
-                femaleRows += '<td>' + s.total_absent + '</td><td>' + s.total_present + '</td></tr>';
-                femaleNum++;
-            });
-
-            // Female total row
-            femaleRows += '<tr class="total-row"><td>' + data.female_count + '</td><td class="name-cell">&lt;=== FEMALE | TOTAL Per Day ===&gt;</td>';
-            days.forEach(function(day) {
-                femaleRows += '<td>' + (data.female_daily_totals[day] || 0) + '</td>';
-            });
-            femaleRows += '<td>' + data.female_total_absent + '</td><td>' + data.female_total_present + '</td></tr>';
-
-            var rate = parseFloat(data.combined_percentage);
-            var displayRate = isNaN(rate) ? '0.0' : rate.toFixed(1);
-
-            var html = '<div class="report-section">';
-            html += '<div class="report-title">';
+            // Header
+            html += '<div class="sf2-header">';
             html += '<h2>School Form 2 (SF2) Daily Attendance Report of Learners</h2>';
             html += '<p>(This replaces Form 1, Form 2 & STS Form 4 - Absenteeism and Dropout Profile)</p>';
             html += '</div>';
 
-            html += '<div class="report-info">';
-            html += '<div class="info-item"><span class="label">School ID</span><span class="value">' + data.school_id + '</span></div>';
-            html += '<div class="info-item"><span class="label">School Name</span><span class="value">' + data.school_name + '</span></div>';
-            html += '<div class="info-item"><span class="label">School Year</span><span class="value">' + data.school_year + '</span></div>';
-            html += '<div class="info-item"><span class="label">Month</span><span class="value">' + data.month + '</span></div>';
-            html += '<div class="info-item"><span class="label">Grade Level</span><span class="value">' + data.grade_level + '</span></div>';
-            html += '<div class="info-item"><span class="label">Section</span><span class="value">' + data.section + '</span></div>';
-            html += '<div class="info-item"><span class="label">School Days</span><span class="value">' + data.num_school_days + ' days</span></div>';
-            html += '<div class="info-item"><span class="label">Total Students</span><span class="value">' + data.total_students + '</span></div>';
+            // School info
+            html += '<div class="sf2-info">';
+            html += '<div>School ID: <span>' + data.school_info.school_id + '</span></div>';
+            html += '<div>Grade: <span>' + data.school_info.grade + '</span></div>';
+            html += '<div>School Year: <span>' + data.school_info.school_year + '</span></div>';
+            html += '<div>School Name: <span>' + data.school_info.school_name + '</span></div>';
+            html += '<div>Section: <span>' + data.school_info.section + '</span></div>';
+            html += '<div>Month: <span>' + months[data.month] + ' ' + data.year + '</span></div>';
             html += '</div>';
 
+            // Table
             html += '<div class="table-wrapper"><table class="sf2-table">';
-            html += '<thead>';
-            html += '<tr><th rowspan="2">No.</th><th rowspan="2">NAME (Last Name, First Name, Middle Name)</th>' + dayHeaders + '<th rowspan="2">ABSENT</th><th rowspan="2">PRESENT</th></tr>';
-            html += '<tr>' + dayNameHeaders + '</tr>';
-            html += '</thead>';
+
+            // Header row
+            html += '<thead><tr><th>No.</th><th class="name-cell">NAME (Last, First, Middle)</th>';
+            for (var d = 1; d <= data.days_in_month; d++) {
+                var dow = new Date(data.year, data.month - 1, d).getDay();
+                var isWeekend = (dow === 0 || dow === 6);
+                html += '<th' + (isWeekend ? ' class="weekend"' : '') + '>' + d + '</th>';
+            }
+            html += '<th class="total-col">Present</th><th class="total-col">Absent</th></tr></thead>';
+
             html += '<tbody>';
 
-            // Male section
-            html += '<tr class="gender-header"><td colspan="' + (days.length + 4) + '">MALE STUDENTS</td></tr>';
-            html += maleRows;
+            // Males
+            html += '<tr><td colspan="' + (data.days_in_month + 4) + '" class="gender-header">MALE</td></tr>';
+            for (var m = 0; m < data.males.length; m++) {
+                var ms = data.males[m];
+                html += '<tr><td>' + (m + 1) + '</td><td class="name-cell">' + ms.name + '</td>';
+                for (var md = 1; md <= data.days_in_month; md++) {
+                    var status = ms.daily[md];
+                    var cellClass = '';
+                    var cellContent = '';
+                    if (status === 'weekend') { cellClass = 'weekend'; }
+                    else if (status === 'present') { cellClass = 'present-mark'; cellContent = '\u2713'; }
+                    else if (status === 'absent') { cellClass = 'absent-mark'; cellContent = 'X'; }
+                    html += '<td class="' + cellClass + '">' + cellContent + '</td>';
+                }
+                html += '<td class="total-col">' + ms.total_present + '</td><td class="total-col">' + ms.total_absent + '</td></tr>';
+            }
 
-            // Female section
-            html += '<tr class="gender-header"><td colspan="' + (days.length + 4) + '">FEMALE STUDENTS</td></tr>';
-            html += femaleRows;
+            // Females
+            html += '<tr><td colspan="' + (data.days_in_month + 4) + '" class="gender-header">FEMALE</td></tr>';
+            for (var f = 0; f < data.females.length; f++) {
+                var fs = data.females[f];
+                html += '<tr><td>' + (f + 1) + '</td><td class="name-cell">' + fs.name + '</td>';
+                for (var fd = 1; fd <= data.days_in_month; fd++) {
+                    var fStatus = fs.daily[fd];
+                    var fCellClass = '';
+                    var fCellContent = '';
+                    if (fStatus === 'weekend') { fCellClass = 'weekend'; }
+                    else if (fStatus === 'present') { fCellClass = 'present-mark'; fCellContent = '\u2713'; }
+                    else if (fStatus === 'absent') { fCellClass = 'absent-mark'; fCellContent = 'X'; }
+                    html += '<td class="' + fCellClass + '">' + fCellContent + '</td>';
+                }
+                html += '<td class="total-col">' + fs.total_present + '</td><td class="total-col">' + fs.total_absent + '</td></tr>';
+            }
 
             html += '</tbody></table></div>';
 
-            // Summary cards
-            html += '<div class="summary-grid">';
-            html += '<div class="summary-card male"><div class="number">' + data.male_count + '</div><div class="label">Male Students</div></div>';
-            html += '<div class="summary-card female"><div class="number">' + data.female_count + '</div><div class="label">Female Students</div></div>';
-            html += '<div class="summary-card"><div class="number">' + data.total_students + '</div><div class="label">Total Enrolled</div></div>';
-            html += '<div class="summary-card"><div class="number">' + data.grand_total_present + '</div><div class="label">Total Present Days</div></div>';
-            html += '<div class="summary-card absent-card"><div class="number">' + data.grand_total_absent + '</div><div class="label">Total Absent Days</div></div>';
-            html += '<div class="summary-card rate-card"><div class="number">' + displayRate + '%</div><div class="label">Attendance Rate</div></div>';
-            html += '</div>';
+            // Summary
+            html += '<div class="summary-section"><div class="summary-grid">';
+            html += '<div class="summary-item"><div class="value">' + data.summary.total_students + '</div><div class="label">Total Students</div></div>';
+            html += '<div class="summary-item"><div class="value">' + data.summary.male_count + '</div><div class="label">Male</div></div>';
+            html += '<div class="summary-item"><div class="value">' + data.summary.female_count + '</div><div class="label">Female</div></div>';
+            html += '<div class="summary-item"><div class="value">' + data.summary.total_present + '</div><div class="label">Total Present</div></div>';
+            html += '<div class="summary-item"><div class="value">' + data.summary.total_absent + '</div><div class="label">Total Absent</div></div>';
+            html += '<div class="summary-item"><div class="value">' + data.summary.attendance_rate + '%</div><div class="label">Attendance Rate</div></div>';
+            html += '</div></div>';
 
             // Signatures
             html += '<div class="signatures">';
-            html += '<div class="sig-block"><div class="sig-label">Prepared by:</div><div class="sig-name">' + data.adviser.toUpperCase() + '</div><div class="sig-title">Class Adviser</div></div>';
-            html += '<div class="sig-block"><div class="sig-label">Certified Correct:</div><div class="sig-name">' + data.school_head.toUpperCase() + '</div><div class="sig-title">School Head</div></div>';
+            html += '<div class="sig-block"><div class="sig-label">Prepared by:</div><div class="sig-name">TIFANNY MARTIN ARAGON</div><div class="sig-title">Class Adviser</div></div>';
+            html += '<div class="sig-block"><div class="sig-label">Certified Correct:</div><div class="sig-name">MC RIZ TEMPLETON BUEN</div><div class="sig-title">School Head</div></div>';
             html += '</div>';
 
-            html += '</div>';
-            content.innerHTML = html;
+            section.innerHTML = html;
         }
 
-        async function downloadExcel() {
+        async function downloadReport() {
             var month = document.getElementById('monthSelect').value;
             var year = document.getElementById('yearSelect').value;
 
@@ -300,8 +249,7 @@
                 });
 
                 if (!response.ok) {
-                    var errData = await response.json();
-                    alert('Failed to download: ' + (errData.error || 'Unknown error'));
+                    alert('Failed to download SF2 report. Please generate the report first.');
                     return;
                 }
 
@@ -309,14 +257,13 @@
                 var url = window.URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = 'SF2_' + document.getElementById('monthSelect').options[document.getElementById('monthSelect').selectedIndex].text.toUpperCase() + '_' + year + '_Grade6_GreatGeniuses.xlsx';
+                a.download = 'SF2_' + months[parseInt(month)] + '_' + year + '_Grade6_GreatGeniuses.xlsx';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             } catch (err) {
-                alert('Failed to download SF2 report. Make sure the server is running and try generating the report first.');
-                console.error('Download error:', err);
+                alert('Connection error. Please try again.');
             }
         }
     </script>

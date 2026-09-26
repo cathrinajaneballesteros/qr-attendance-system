@@ -39,15 +39,7 @@
 </head>
 <body>
     <div class="sms-container">
-        <div class="nav-bar">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="students.html">Students</a>
-            <a href="attendance.html">Scan QR</a>
-            <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html" class="active">SMS Logs</a>
-            <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
+        <div class="nav-bar" id="navBar"></div>
 
         <div class="send-sms-section">
             <h2>Send SMS Notification</h2>
@@ -60,7 +52,7 @@
                 </div>
                 <div class="form-group">
                     <label>Contact Number</label>
-                    <input type="text" id="contactNumber" placeholder="Contact number (leave empty for now)" readonly>
+                    <input type="text" id="contactNumber" placeholder="" readonly>
                 </div>
             </div>
             <div class="form-row">
@@ -110,10 +102,22 @@
         if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        if (user && user.role !== 'admin') {
-            var manageLink = document.getElementById('manageUsersLink');
-            if (manageLink) manageLink.style.display = 'none';
+        // Build nav based on role
+        function buildNav() {
+            var nav = document.getElementById('navBar');
+            var html = '';
+            html += '<a href="dashboard.html">Dashboard</a>';
+            html += '<a href="students.html">Students</a>';
+            html += '<a href="attendance.html">Scan QR</a>';
+            html += '<a href="sf2-report.html">SF2 Report</a>';
+            html += '<a href="sms-logs.html" class="active">SMS Logs</a>';
+            if (user && user.role === 'admin') {
+                html += '<a href="manage-users.html">Manage Users</a>';
+            }
+            html += '<a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>';
+            nav.innerHTML = html;
         }
+        buildNav();
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -122,7 +126,6 @@
 
         var studentsData = [];
 
-        // Load students into dropdown
         async function loadStudents() {
             try {
                 var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -133,10 +136,8 @@
                 studentsData = students;
                 var select = document.getElementById('studentSelect');
 
-                // Sort by last name
                 students.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
 
-                // Group by gender
                 var males = students.filter(function(s) { return s.gender === 'Male'; });
                 var females = students.filter(function(s) { return s.gender === 'Female'; });
 
@@ -157,7 +158,6 @@
             } catch (err) { console.log('Load students error:', err); }
         }
 
-        // When student is selected, update contact number
         document.getElementById('studentSelect').addEventListener('change', function() {
             var studentId = parseInt(this.value);
             var contactInput = document.getElementById('contactNumber');
@@ -167,7 +167,6 @@
                 contactInput.value = student.guardian_phone;
             } else {
                 contactInput.value = '';
-                contactInput.placeholder = 'No contact number set for this student';
             }
         });
 
@@ -217,7 +216,6 @@
             sendBtn.textContent = 'Send SMS';
         }
 
-        // Load SMS logs
         async function loadLogs() {
             var tbody = document.getElementById('logsTableBody');
             try {

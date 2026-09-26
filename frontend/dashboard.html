@@ -16,17 +16,8 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <div class="nav-bar">
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="students.html">Students</a>
-            <a href="attendance.html">Scan QR</a>
-            <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
-            <a href="manage-users.html" id="manageUsersLink">Manage Users</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
+        <div class="nav-bar" id="navBar"></div>
 
-        <!-- Real-Time Clock -->
         <div class="clock-section">
             <div class="clock-time" id="clockTime">--:--:-- --</div>
             <div class="clock-date" id="clockDate">Loading...</div>
@@ -119,10 +110,21 @@
         if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
 
-        if (user && user.role !== 'admin') {
-            var manageLink = document.getElementById('manageUsersLink');
-            if (manageLink) manageLink.style.display = 'none';
+        function buildNav() {
+            var nav = document.getElementById('navBar');
+            var html = '';
+            html += '<a href="dashboard.html" class="active">Dashboard</a>';
+            html += '<a href="students.html">Students</a>';
+            html += '<a href="attendance.html">Scan QR</a>';
+            html += '<a href="sf2-report.html">SF2 Report</a>';
+            html += '<a href="sms-logs.html">SMS Logs</a>';
+            if (user && user.role === 'admin') {
+                html += '<a href="manage-users.html">Manage Users</a>';
+            }
+            html += '<a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>';
+            nav.innerHTML = html;
         }
+        buildNav();
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -133,28 +135,20 @@
             document.getElementById('userInfo').textContent = 'Welcome, ' + user.full_name + ' (' + (user.role || 'user') + ')';
         } else { document.getElementById('userInfo').textContent = 'Welcome!'; }
 
-        // REAL-TIME CLOCK - Philippine Time
         function updateClock() {
             var now = new Date();
-            // Convert to Philippine Time (UTC+8)
             var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             var pht = new Date(utc + (8 * 3600000));
-
             var hours = pht.getHours();
             var minutes = pht.getMinutes();
             var seconds = pht.getSeconds();
             var ampm = hours >= 12 ? 'PM' : 'AM';
             var displayHours = hours % 12;
             if (displayHours === 0) displayHours = 12;
-
-            var timeStr = (displayHours < 10 ? '0' : '') + displayHours + ':' +
-                          (minutes < 10 ? '0' : '') + minutes + ':' +
-                          (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
-
+            var timeStr = (displayHours < 10 ? '0' : '') + displayHours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds + ' ' + ampm;
             var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            var dateStr = days[pht.getDay()] + ', ' + months[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
-
+            var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var dateStr = days[pht.getDay()] + ', ' + monthNames[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
             document.getElementById('clockTime').textContent = timeStr;
             document.getElementById('clockDate').textContent = dateStr;
         }
@@ -183,14 +177,12 @@
                 if (!response.ok) { container.innerHTML = '<div class="no-data">No students loaded yet.</div>'; return; }
                 var students = await response.json();
                 if (!students || students.length === 0) { container.innerHTML = '<div class="no-data">No students enrolled yet.</div>'; return; }
-
                 var males = []; var females = [];
                 for (var i = 0; i < students.length; i++) {
                     if (students[i].gender === 'Male') males.push(students[i]); else females.push(students[i]);
                 }
                 males.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
                 females.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
-
                 var html = '';
                 html += '<div style="color:#1565c0; font-weight:bold; padding:10px 12px; font-size:0.85em; border-bottom:2px solid #fce4ec;">MALE (' + males.length + ')</div>';
                 for (var m = 0; m < males.length; m++) {

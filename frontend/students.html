@@ -5,147 +5,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Students - QR Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-        .students-container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+        body { padding: 15px; }
+        .students-container { max-width: 1000px; margin: 0 auto; }
+        .add-section { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .add-section h2 { color: #c2185b; font-size: 1.1em; margin-bottom: 15px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .form-grid .form-group label { display: block; color: #666; font-size: 0.8em; margin-bottom: 5px; font-weight: bold; }
+        .form-grid .form-group input, .form-grid .form-group select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
+        .form-grid .form-group input:focus, .form-grid .form-group select:focus { border-color: #e91e63; outline: none; }
+        .btn-add { background: linear-gradient(135deg, #e91e63, #ec407a); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        .btn-add:hover { transform: scale(1.02); }
+        .add-result { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 0.85em; display: none; }
+        .add-result.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .add-result.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
 
-        .nav-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px; background: #1e1e2e; border-radius: 10px; justify-content: center; }
-        .nav-bar a { padding: 8px 14px; background: #2a2a3e; color: #ccc; text-decoration: none; border-radius: 6px; font-size: 0.8em; transition: all 0.2s; white-space: nowrap; }
-        .nav-bar a:hover, .nav-bar a.active { background: #00b894; color: white; }
-        .nav-bar a.logout-btn { background: #ff6b6b33; color: #ff6b6b; }
-        .nav-bar a.logout-btn:hover { background: #ff6b6b; color: white; }
+        .list-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .list-section h2 { color: #c2185b; font-size: 1em; margin-bottom: 15px; }
+        .student-table { width: 100%; border-collapse: collapse; }
+        .student-table th { background: #fce4ec; color: #c2185b; padding: 10px 12px; text-align: left; font-size: 0.8em; }
+        .student-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
+        .student-table tr:hover { background: #fff5f7; }
+        .gender-badge { padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: bold; }
+        .gender-badge.male { background: #e3f2fd; color: #1565c0; }
+        .gender-badge.female { background: #fce4ec; color: #c2185b; }
+        .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75em; font-weight: bold; }
+        .btn-delete:hover { background: #c62828; color: white; }
+        .actions-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 
-        .page-header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .page-header h1 { font-size: 1.3em; color: #00b894; margin-bottom: 5px; }
-        .page-header p { color: #888; font-size: 0.85em; }
-
-        .add-section { background: #1e1e2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
-        .add-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; }
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { color: #ccc; font-size: 0.8em; margin-bottom: 5px; }
-        .form-group input, .form-group select { padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; }
-        .form-group input:focus, .form-group select:focus { border-color: #00b894; outline: none; }
-        .form-group input::placeholder { color: #555; }
-
-        .btn-add { padding: 10px 25px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; }
-        .btn-add:hover { transform: scale(1.03); }
-        .btn-add:disabled { opacity: 0.6; pointer-events: none; }
-
-        .btn-print-all { padding: 10px 25px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; margin-left: 10px; text-decoration: none; display: inline-block; }
-        .btn-print-all:hover { transform: scale(1.03); }
-
-        .msg { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.85em; display: none; }
-        .msg.success { background: #00b89422; color: #00b894; border: 1px solid #00b89444; display: block; }
-        .msg.error { background: #ff6b6b22; color: #ff6b6b; border: 1px solid #ff6b6b44; display: block; }
-
-        .students-section { background: #1e1e2e; padding: 20px; border-radius: 12px; }
-        .students-section h2 { color: #00b894; font-size: 1em; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .student-count { color: #888; font-size: 0.85em; font-weight: normal; }
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .students-table { width: 100%; border-collapse: collapse; }
-        .students-table th { background: #16213e; color: #00b894; padding: 10px 12px; text-align: left; font-size: 0.8em; white-space: nowrap; }
-        .students-table td { padding: 10px 12px; border-bottom: 1px solid #333; color: #ddd; font-size: 0.8em; }
-        .students-table tr:hover { background: #2a2a3e; }
-
-        .gender-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
-        .gender-badge.male { background: #74b9ff33; color: #74b9ff; }
-        .gender-badge.female { background: #fd79a833; color: #fd79a8; }
-
-        .btn-delete { padding: 5px 12px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
-        .btn-delete:hover { background: #ee5a5a; }
-        .btn-edit { padding: 5px 12px; background: #74b9ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; margin-right: 5px; }
-        .btn-edit:hover { background: #5aa0e6; }
-
-        .search-bar { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #2a2a3e; color: white; font-size: 0.9em; margin-bottom: 15px; }
-        .search-bar:focus { border-color: #00b894; outline: none; }
-        .search-bar::placeholder { color: #555; }
-
-        @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr 1fr; }
-            .nav-bar a { padding: 7px 10px; font-size: 0.75em; }
-        }
-        @media (max-width: 480px) {
-            .students-container { padding: 10px; }
-            .form-row { grid-template-columns: 1fr; }
-            .nav-bar { gap: 5px; padding: 10px; }
-            .nav-bar a { padding: 6px 8px; font-size: 0.7em; }
-        }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="students-container">
-        <div class="nav-bar">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="students.html" class="active">Students</a>
-            <a href="attendance.html">Scan QR</a>
-            <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
-            <a href="manage-users.html">Manage Users</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
+        <div class="nav-bar" id="navBar"></div>
 
-        <div class="page-header">
-            <h1>Student Management</h1>
-            <p>Add, edit, and manage students. Each student gets a unique QR code based on their name.</p>
-        </div>
-
-        <!-- Add Student Form -->
         <div class="add-section">
             <h2>Add New Student</h2>
-            <form id="addStudentForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>First Name *</label>
-                        <input type="text" id="firstName" placeholder="First name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Middle Name</label>
-                        <input type="text" id="middleName" placeholder="Middle name">
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name *</label>
-                        <input type="text" id="lastName" placeholder="Last name" required>
-                    </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" placeholder="First Name" required>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Gender *</label>
-                        <select id="gender" required>
-                            <option value="">Select gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>LRN</label>
-                        <input type="text" id="lrn" placeholder="Learner Reference Number">
-                    </div>
-                    <div class="form-group">
-                        <label>Guardian Name</label>
-                        <input type="text" id="guardianName" placeholder="Guardian name">
-                    </div>
-                    <div class="form-group">
-                        <label>Guardian Phone</label>
-                        <input type="text" id="guardianPhone" placeholder="09XXXXXXXXX">
-                    </div>
+                <div class="form-group">
+                    <label>Middle Name</label>
+                    <input type="text" id="middleName" placeholder="Middle Name">
                 </div>
-                <button type="submit" class="btn-add" id="addBtn">Add Student</button>
-                <a href="print-qr.html" class="btn-print-all">Print All QR Codes</a>
-                <div class="msg" id="formMsg"></div>
-            </form>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option value="">-- Select --</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>LRN</label>
+                    <input type="text" id="lrn" placeholder="Learner Reference Number">
+                </div>
+                <div class="form-group">
+                    <label>Guardian Name</label>
+                    <input type="text" id="guardianName" placeholder="Guardian Name">
+                </div>
+                <div class="form-group">
+                    <label>Guardian Phone</label>
+                    <input type="text" id="guardianPhone" placeholder="09XXXXXXXXX">
+                </div>
+            </div>
+            <button class="btn-add" onclick="addStudent()">Add Student</button>
+            <div class="add-result" id="addResult"></div>
         </div>
 
-        <!-- Students List -->
-        <div class="students-section">
-            <h2>
-                All Students
-                <span class="student-count" id="studentCount">Loading...</span>
-            </h2>
-            <input type="text" class="search-bar" id="searchBar" placeholder="Search students by name..." oninput="filterStudents()">
+        <div class="list-section">
+            <h2>All Students - Grade 6 Great Geniuses</h2>
+            <div class="actions-row">
+                <a href="print-qr.html" class="btn-add" style="text-decoration:none; font-size:0.85em; padding:8px 18px;">Download QR Codes</a>
+            </div>
             <div class="table-wrapper">
-                <table class="students-table">
+                <table class="student-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -154,163 +96,73 @@
                             <th>LRN</th>
                             <th>Guardian</th>
                             <th>Phone</th>
-                            <th>QR Code</th>
-                            <th>Actions</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="8" style="text-align:center; color:#888;">Loading students...</td></tr>
+                        <tr><td colspan="7" class="no-data">Loading students...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script>
         var token = localStorage.getItem('token');
         var user = null;
+        if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (!token) window.location.href = 'index.html';
 
-        var allStudents = [];
+        function buildNav() {
+            var nav = document.getElementById('navBar');
+            var html = '';
+            html += '<a href="dashboard.html">Dashboard</a>';
+            html += '<a href="students.html" class="active">Students</a>';
+            html += '<a href="attendance.html">Scan QR</a>';
+            html += '<a href="sf2-report.html">SF2 Report</a>';
+            html += '<a href="sms-logs.html">SMS Logs</a>';
+            if (user && user.role === 'admin') {
+                html += '<a href="manage-users.html">Manage Users</a>';
+            }
+            html += '<a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>';
+            nav.innerHTML = html;
+        }
+        buildNav();
 
         function confirmLogout(e) {
             e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            }
+            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
         }
 
-        // Load students
-        async function loadStudents() {
-            try {
-                var response = await fetch('/api/students', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-
-                if (!response.ok) {
-                    document.getElementById('studentsTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ff6b6b;">Could not load students. Server may be starting up. Please refresh.</td></tr>';
-                    document.getElementById('studentCount').textContent = '(Error)';
-                    return;
-                }
-
-                allStudents = await response.json();
-                renderStudents(allStudents);
-                document.getElementById('studentCount').textContent = '(' + allStudents.length + ' students)';
-            } catch (err) {
-                document.getElementById('studentsTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ff6b6b;">Connection error. Please refresh.</td></tr>';
-                document.getElementById('studentCount').textContent = '(Error)';
-            }
-        }
-
-        function renderStudents(students) {
-            var tbody = document.getElementById('studentsTableBody');
-            if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888;">No students found. Add a student above.</td></tr>';
-                return;
-            }
-
-            var html = '';
-            for (var i = 0; i < students.length; i++) {
-                var s = students[i];
-                var genderClass = s.gender === 'Male' ? 'male' : 'female';
-                var fullName = s.last_name + ', ' + s.first_name + (s.middle_name ? ' ' + s.middle_name : '');
-                var qrData = s.qr_code || (s.first_name + ' ' + s.last_name);
-
-                html += '<tr>';
-                html += '<td>' + (i + 1) + '</td>';
-                html += '<td><strong>' + fullName + '</strong></td>';
-                html += '<td><span class="gender-badge ' + genderClass + '">' + s.gender + '</span></td>';
-                html += '<td>' + (s.lrn || '-') + '</td>';
-                html += '<td>' + (s.guardian_name || '-') + '</td>';
-                html += '<td>' + (s.guardian_phone || '-') + '</td>';
-                html += '<td><canvas id="qr-' + s.id + '" width="60" height="60"></canvas></td>';
-                html += '<td>';
-                html += '<button class="btn-edit" onclick="editStudent(' + s.id + ')">Edit</button>';
-                html += '<button class="btn-delete" onclick="deleteStudent(' + s.id + ', \'' + fullName.replace(/'/g, "\\'") + '\')">Delete</button>';
-                html += '</td>';
-                html += '</tr>';
-            }
-            tbody.innerHTML = html;
-
-            // Generate QR codes after rendering
-            for (var j = 0; j < students.length; j++) {
-                var st = students[j];
-                var canvas = document.getElementById('qr-' + st.id);
-                var qrText = st.qr_code || (st.first_name + ' ' + st.last_name);
-                if (canvas) {
-                    QRCode.toCanvas(canvas, qrText, { width: 60, margin: 1 });
-                }
-            }
-        }
-
-        function filterStudents() {
-            var search = document.getElementById('searchBar').value.toLowerCase();
-            if (!search) {
-                renderStudents(allStudents);
-                return;
-            }
-            var filtered = [];
-            for (var i = 0; i < allStudents.length; i++) {
-                var s = allStudents[i];
-                var name = (s.first_name + ' ' + s.last_name + ' ' + (s.middle_name || '')).toLowerCase();
-                if (name.indexOf(search) !== -1) {
-                    filtered.push(s);
-                }
-            }
-            renderStudents(filtered);
-        }
-
-        // Add student
-        document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            var firstName = document.getElementById('firstName').value.trim().toUpperCase();
-            var middleName = document.getElementById('middleName').value.trim().toUpperCase();
-            var lastName = document.getElementById('lastName').value.trim().toUpperCase();
+        async function addStudent() {
+            var firstName = document.getElementById('firstName').value.trim();
+            var middleName = document.getElementById('middleName').value.trim();
+            var lastName = document.getElementById('lastName').value.trim();
             var gender = document.getElementById('gender').value;
             var lrn = document.getElementById('lrn').value.trim();
             var guardianName = document.getElementById('guardianName').value.trim();
             var guardianPhone = document.getElementById('guardianPhone').value.trim();
-            var formMsg = document.getElementById('formMsg');
-            var addBtn = document.getElementById('addBtn');
-
-            formMsg.className = 'msg';
-            formMsg.style.display = 'none';
+            var resultDiv = document.getElementById('addResult');
 
             if (!firstName || !lastName || !gender) {
-                formMsg.textContent = 'First name, last name, and gender are required.';
-                formMsg.className = 'msg error';
+                resultDiv.className = 'add-result error';
+                resultDiv.textContent = 'First name, last name, and gender are required.';
+                resultDiv.style.display = 'block';
                 return;
             }
-
-            addBtn.disabled = true;
-            addBtn.textContent = 'Adding...';
 
             try {
                 var response = await fetch('/api/students', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({
-                        first_name: firstName,
-                        middle_name: middleName || null,
-                        last_name: lastName,
-                        gender: gender,
-                        lrn: lrn || null,
-                        guardian_name: guardianName || null,
-                        guardian_phone: guardianPhone || null
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ first_name: firstName, middle_name: middleName, last_name: lastName, gender: gender, lrn: lrn, guardian_name: guardianName, guardian_phone: guardianPhone })
                 });
 
                 var data = await response.json();
-
                 if (response.ok) {
-                    formMsg.textContent = 'Student ' + firstName + ' ' + lastName + ' added successfully!';
-                    formMsg.className = 'msg success';
+                    resultDiv.className = 'add-result success';
+                    resultDiv.textContent = 'Student ' + firstName + ' ' + lastName + ' added successfully!';
+                    resultDiv.style.display = 'block';
                     document.getElementById('firstName').value = '';
                     document.getElementById('middleName').value = '';
                     document.getElementById('lastName').value = '';
@@ -320,86 +172,63 @@
                     document.getElementById('guardianPhone').value = '';
                     loadStudents();
                 } else {
-                    formMsg.textContent = data.error || 'Failed to add student.';
-                    formMsg.className = 'msg error';
+                    resultDiv.className = 'add-result error';
+                    resultDiv.textContent = data.error || 'Failed to add student.';
+                    resultDiv.style.display = 'block';
                 }
             } catch (err) {
-                formMsg.textContent = 'Connection error. Make sure the server is running.';
-                formMsg.className = 'msg error';
+                resultDiv.className = 'add-result error';
+                resultDiv.textContent = 'Connection error. Please try again.';
+                resultDiv.style.display = 'block';
             }
-
-            addBtn.disabled = false;
-            addBtn.textContent = 'Add Student';
-        });
-
-        // Edit student
-        function editStudent(id) {
-            var student = null;
-            for (var i = 0; i < allStudents.length; i++) {
-                if (allStudents[i].id === id) { student = allStudents[i]; break; }
-            }
-            if (!student) return;
-
-            var newFirst = prompt('First Name:', student.first_name);
-            if (newFirst === null) return;
-            var newMiddle = prompt('Middle Name:', student.middle_name || '');
-            if (newMiddle === null) return;
-            var newLast = prompt('Last Name:', student.last_name);
-            if (newLast === null) return;
-            var newGender = prompt('Gender (Male/Female):', student.gender);
-            if (newGender === null) return;
-            var newLrn = prompt('LRN:', student.lrn || '');
-            if (newLrn === null) return;
-            var newGuardian = prompt('Guardian Name:', student.guardian_name || '');
-            if (newGuardian === null) return;
-            var newPhone = prompt('Guardian Phone:', student.guardian_phone || '');
-            if (newPhone === null) return;
-
-            fetch('/api/students/' + id, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({
-                    first_name: newFirst.toUpperCase(),
-                    middle_name: newMiddle.toUpperCase() || null,
-                    last_name: newLast.toUpperCase(),
-                    gender: newGender,
-                    lrn: newLrn || null,
-                    guardian_name: newGuardian || null,
-                    guardian_phone: newPhone || null
-                })
-            }).then(function(res) {
-                if (res.ok) {
-                    loadStudents();
-                } else {
-                    alert('Failed to update student.');
-                }
-            }).catch(function() {
-                alert('Connection error.');
-            });
         }
 
-        // Delete student
-        function deleteStudent(id, name) {
-            if (!confirm('Are you sure you want to delete ' + name + '? This will also delete their attendance records.')) return;
+        async function loadStudents() {
+            var tbody = document.getElementById('studentsTableBody');
+            try {
+                var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
+                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">Could not load students.</td></tr>'; return; }
+                var students = await response.json();
+                if (!students || students.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">No students enrolled yet.</td></tr>'; return; }
 
-            fetch('/api/students/' + id, {
-                method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + token }
-            }).then(function(res) {
-                if (res.ok) {
-                    loadStudents();
-                } else {
-                    alert('Failed to delete student.');
+                var males = students.filter(function(s) { return s.gender === 'Male'; });
+                var females = students.filter(function(s) { return s.gender === 'Female'; });
+                males.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+                females.sort(function(a, b) { return a.last_name.localeCompare(b.last_name); });
+                var sorted = males.concat(females);
+
+                var html = '';
+                for (var i = 0; i < sorted.length; i++) {
+                    var s = sorted[i];
+                    var fullName = s.last_name + ', ' + s.first_name + (s.middle_name ? ' ' + s.middle_name : '');
+                    var genderClass = s.gender === 'Male' ? 'male' : 'female';
+                    html += '<tr>';
+                    html += '<td>' + (i + 1) + '</td>';
+                    html += '<td>' + fullName + '</td>';
+                    html += '<td><span class="gender-badge ' + genderClass + '">' + s.gender + '</span></td>';
+                    html += '<td>' + (s.lrn || '-') + '</td>';
+                    html += '<td>' + (s.guardian_name || '-') + '</td>';
+                    html += '<td>' + (s.guardian_phone || '-') + '</td>';
+                    html += '<td><button class="btn-delete" onclick="deleteStudent(' + s.id + ', \'' + fullName.replace(/'/g, "\\'") + '\')">Delete</button></td>';
+                    html += '</tr>';
                 }
-            }).catch(function() {
-                alert('Connection error.');
-            });
+                tbody.innerHTML = html;
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">Could not load students.</td></tr>'; }
         }
 
-        // Load on page ready
+        async function deleteStudent(id, name) {
+            if (!confirm('Are you sure you want to delete ' + name + '?')) return;
+            try {
+                var response = await fetch('/api/students/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) { loadStudents(); }
+                else { alert('Failed to delete student.'); }
+            } catch (err) { alert('Connection error.'); }
+        }
+
         loadStudents();
     </script>
 </body>
