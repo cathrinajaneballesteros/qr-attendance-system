@@ -20,6 +20,7 @@
         .stat-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(219,112,147,0.1); border-top: 3px solid #e91e63; }
         .stat-card .stat-value { font-size: 2em; font-weight: bold; color: #880e4f; }
         .stat-card .stat-label { font-size: 0.75em; color: #888; margin-top: 5px; }
+        .page-loading { text-align: center; padding: 60px; color: #880e4f; font-size: 1.1em; }
         @media (max-width: 480px) { .clock-time { font-size: 2em; } .stats-grid { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
@@ -33,30 +34,36 @@
             <a href="sms-logs.html">SMS Logs</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
-        <div class="clock-section">
-            <div class="clock-time" id="clockTime">--:--:-- --</div>
-            <div class="clock-date" id="clockDate">Loading...</div>
-            <div class="clock-label">Philippine Standard Time (UTC+8)</div>
-        </div>
-        <div class="welcome-section">
-            <h1 id="welcomeMsg">Welcome!</h1>
-            <p>QR Attendance System - Sta. Rosa Elementary School</p>
-            <p>Grade 6 - Great Geniuses | S.Y. 2026-2027</p>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-value" id="totalStudents">0</div><div class="stat-label">Total Students</div></div>
-            <div class="stat-card"><div class="stat-value" id="presentToday">0</div><div class="stat-label">Present Today</div></div>
-            <div class="stat-card"><div class="stat-value" id="absentToday">0</div><div class="stat-label">Absent Today</div></div>
-            <div class="stat-card"><div class="stat-value" id="attendanceRate">0%</div><div class="stat-label">Attendance Rate</div></div>
+
+        <div id="pageLoading" class="page-loading">Verifying session...</div>
+
+        <div id="mainContent" style="display:none;">
+            <div class="clock-section">
+                <div class="clock-time" id="clockTime">--:--:-- --</div>
+                <div class="clock-date" id="clockDate">Loading...</div>
+                <div class="clock-label">Philippine Standard Time (UTC+8)</div>
+            </div>
+            <div class="welcome-section">
+                <h1 id="welcomeMsg">Welcome!</h1>
+                <p>QR Attendance System - Sta. Rosa Elementary School</p>
+                <p>Grade 6 - Great Geniuses | S.Y. 2026-2027</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="totalStudents">0</div><div class="stat-label">Total Students</div></div>
+                <div class="stat-card"><div class="stat-value" id="presentToday">0</div><div class="stat-label">Present Today</div></div>
+                <div class="stat-card"><div class="stat-value" id="absentToday">0</div><div class="stat-label">Absent Today</div></div>
+                <div class="stat-card"><div class="stat-value" id="attendanceRate">0%</div><div class="stat-label">Attendance Rate</div></div>
+            </div>
         </div>
     </div>
     <script>
         var token = localStorage.getItem('token');
-        var user = null;
-        if (!token) { window.location.href = 'index.html'; }
-        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (user && user.role === 'admin') { window.location.href = 'admin-dashboard.html'; }
-        document.getElementById('welcomeMsg').textContent = 'Welcome, ' + (user.full_name || user.username || 'Teacher') + '!';
+
+        /* No token = go to login immediately */
+        if (!token) {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -78,26 +85,62 @@
             if (dh === 0) dh = 12;
             document.getElementById('clockTime').textContent = (dh < 10 ? '0' : '') + dh + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' ' + ampm;
             var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            document.getElementById('clockDate').textContent = days[pht.getDay()] + ', ' + months[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
+            var mons = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            document.getElementById('clockDate').textContent = days[pht.getDay()] + ', ' + mons[pht.getMonth()] + ' ' + pht.getDate() + ', ' + pht.getFullYear();
         }
-        updateClock();
-        setInterval(updateClock, 1000);
 
-        async function loadStats() {
+        /* Verify token with backend before showing anything */
+        async function verifyAndLoad() {
             try {
-                var response = await fetch('/api/attendance/summary', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!response.ok) return;
-                var data = await response.json();
-                document.getElementById('totalStudents').textContent = data.total_students || 0;
-                document.getElementById('presentToday').textContent = data.present_today || 0;
-                document.getElementById('absentToday').textContent = data.absent_today || 0;
-                document.getElementById('attendanceRate').textContent = (data.attendance_rate || 0) + '%';
+                var res = await fetch('/api/students', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    /* Token is invalid or expired - clear and go to login */
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                /* Token is valid! Check if admin - redirect to admin dashboard */
+                var user = null;
+                try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
+
+                if (user && user.role === 'admin') {
+                    window.location.href = 'admin-dashboard.html';
+                    return;
+                }
+
+                /* Teacher - show the page */
+                document.getElementById('pageLoading').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('welcomeMsg').textContent = 'Welcome, ' + (user.full_name || user.username || 'Teacher') + '!';
+
+                updateClock();
+                setInterval(updateClock, 1000);
+
+                /* Load stats */
+                try {
+                    var res2 = await fetch('/api/attendance/summary', { headers: { 'Authorization': 'Bearer ' + token } });
+                    if (res2.ok) {
+                        var data = await res2.json();
+                        document.getElementById('totalStudents').textContent = data.total_students || 0;
+                        document.getElementById('presentToday').textContent = data.present_today || 0;
+                        document.getElementById('absentToday').textContent = data.absent_today || 0;
+                        document.getElementById('attendanceRate').textContent = (data.attendance_rate || 0) + '%';
+                    }
+                } catch (err) { console.log('Stats error:', err); }
+
             } catch (err) {
-                console.log('Stats error:', err);
+                console.log('Verify error:', err);
+                /* Server not reachable - clear token and go to login */
+                localStorage.clear();
+                window.location.href = 'index.html';
             }
         }
-        loadStats();
+
+        verifyAndLoad();
     </script>
 </body>
 </html>
