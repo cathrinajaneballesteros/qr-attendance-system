@@ -50,10 +50,12 @@
     </div>
     <script>
         var token = localStorage.getItem('token');
-        var user = null;
         if (!token) { window.location.href = 'index.html'; }
+
+        /* NO ROLE CHECK - removed the line that was redirecting to dashboard */
+
+        var user = null;
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (user && user.role !== 'admin') { window.location.href = 'dashboard.html'; }
 
         function confirmLogout(e) {
             e.preventDefault();
