@@ -34,8 +34,6 @@
             margin-bottom: 15px;
             font-size: 1.1em;
         }
-
-        /* Summary stats */
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -59,70 +57,6 @@
             color: #888;
             margin-top: 5px;
         }
-
-        /* Student attendance status section */
-        .attendance-check {
-            margin-bottom: 15px;
-        }
-        .attendance-check h3 {
-            color: #880e4f;
-            font-size: 0.95em;
-            margin-bottom: 10px;
-        }
-        .student-status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 8px;
-        }
-        .student-status-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: #fff5f7;
-            border-radius: 8px;
-            border: 1px solid #fce4ec;
-            font-size: 0.8em;
-        }
-        .student-status-item .student-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-        }
-        .student-status-item .student-info .num {
-            color: #888;
-            font-size: 0.85em;
-            min-width: 25px;
-        }
-        .student-status-item .student-info .name {
-            font-weight: 600;
-            color: #333;
-        }
-        .student-status-item .status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        .badge-present {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
-        }
-        .badge-absent {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-        }
-        .badge-time {
-            font-size: 0.75em;
-            color: #666;
-            margin-left: 5px;
-        }
-
-        /* Dropdown for message type */
         .filter-row {
             display: flex;
             gap: 10px;
@@ -165,8 +99,6 @@
         .filter-row button:hover {
             background: #ad1457;
         }
-
-        /* Send SMS section */
         .send-sms-row {
             display: flex;
             gap: 10px;
@@ -221,8 +153,6 @@
             background: #ffebee;
             color: #c62828;
         }
-
-        /* Table */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -270,13 +200,9 @@
             word-wrap: break-word;
             font-size: 0.8em;
         }
-
         @media (max-width: 768px) {
             .stats-row {
                 grid-template-columns: 1fr 1fr;
-            }
-            .student-status-grid {
-                grid-template-columns: 1fr;
             }
         }
         @media (max-width: 480px) {
@@ -306,7 +232,6 @@
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
-        <!-- Summary Stats -->
         <div class="section-card">
             <h2>SMS Notification Summary</h2>
             <div class="stats-row">
@@ -329,16 +254,6 @@
             </div>
         </div>
 
-        <!-- Student Attendance Status - Dropdown style -->
-        <div class="section-card attendance-check">
-            <h2>Student Attendance Status (Today)</h2>
-            <p style="font-size:0.8em;color:#888;margin-bottom:12px;">Check if each student is already in class or not. SMS is sent automatically when attendance is recorded.</p>
-            <div class="student-status-grid" id="studentStatusGrid">
-                <div class="no-data">Loading students...</div>
-            </div>
-        </div>
-
-        <!-- Send SMS manually -->
         <div class="section-card">
             <h2>Send SMS Notification</h2>
             <div class="send-msg" id="sendMsg"></div>
@@ -359,7 +274,6 @@
             <input type="text" id="customMessage" placeholder="Type your custom message here..." style="display:none;width:100%;padding:10px;border:2px solid #fce4ec;border-radius:8px;margin-top:10px;font-size:0.9em;">
         </div>
 
-        <!-- SMS Logs Table -->
         <div class="section-card">
             <h2>SMS Notification Logs</h2>
             <div class="filter-row">
@@ -415,7 +329,6 @@
             }
         }
 
-        /* Show/hide custom message input */
         document.getElementById('smsMessageSelect').addEventListener('change', function() {
             var customInput = document.getElementById('customMessage');
             if (this.value === 'custom') {
@@ -498,58 +411,23 @@
             document.getElementById('todayCount').textContent = todayCount;
         }
 
-        async function loadStudentStatus() {
+        async function loadStudents() {
             try {
-                var studentsRes = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!studentsRes.ok) return;
-                var students = await studentsRes.json();
+                var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!response.ok) return;
+                var students = await response.json();
                 allStudents = students;
 
-                var attendanceRes = await fetch('/api/attendance/today', { headers: { 'Authorization': 'Bearer ' + token } });
-                var todayRecords = [];
-                if (attendanceRes.ok) {
-                    todayRecords = await attendanceRes.json();
-                }
-
-                /* Build attendance map */
-                var attendanceMap = {};
-                for (var a = 0; a < todayRecords.length; a++) {
-                    attendanceMap[todayRecords[a].student_id] = todayRecords[a];
-                }
-
-                /* Render student status grid */
-                var grid = document.getElementById('studentStatusGrid');
-                var html = '';
-                for (var i = 0; i < students.length; i++) {
-                    var s = students[i];
-                    var record = attendanceMap[s.id];
-                    var isPresent = !!record;
-
-                    html += '<div class="student-status-item">';
-                    html += '<div class="student-info">';
-                    html += '<span class="num">' + (i + 1) + '.</span>';
-                    html += '<span class="name">' + s.full_name + '</span>';
-                    html += '</div>';
-                    if (isPresent) {
-                        html += '<span class="status-badge badge-present">In Class <span class="badge-time">' + (record.time_in || '') + '</span></span>';
-                    } else {
-                        html += '<span class="status-badge badge-absent">Not Yet</span>';
-                    }
-                    html += '</div>';
-                }
-                grid.innerHTML = html;
-
-                /* Populate SMS student dropdown */
                 var select = document.getElementById('smsStudentSelect');
                 select.innerHTML = '<option value="">-- Select Student --</option>';
-                for (var j = 0; j < students.length; j++) {
+                for (var i = 0; i < students.length; i++) {
                     var opt = document.createElement('option');
-                    opt.value = students[j].id;
-                    opt.textContent = students[j].full_name;
+                    opt.value = students[i].id;
+                    opt.textContent = students[i].full_name;
                     select.appendChild(opt);
                 }
             } catch (err) {
-                console.log('Load student status error:', err);
+                console.log('Load students error:', err);
             }
         }
 
@@ -638,8 +516,7 @@
             }
         }
 
-        /* Load everything */
-        loadStudentStatus();
+        loadStudents();
         loadLogs();
     </script>
 </body>
