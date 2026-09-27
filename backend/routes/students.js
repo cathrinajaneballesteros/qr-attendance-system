@@ -1,91 +1,65 @@
 
-var express = require('express');
-var router = express.Router();
-var db = require('../database/db');
-var jwt = require('jsonwebtoken');
-var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2025';
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
 
-function checkAuth(req) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+router.get('/', auth, function(req, res) {
     try {
-        return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-    } catch (e) { return null; }
-}
-
-router.get('/', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        var students = db.all('SELECT * FROM students ORDER BY gender ASC, last_name ASC', []);
+        var db = req.app.get('db');
+        var students = db.prepare('SELECT * FROM students ORDER BY sex, full_name').all();
         res.json(students);
-    } catch (err) {
-        console.error('Get students error:', err);
-        res.status(500).json({ error: 'Failed to load students' });
+    } catch (error) {
+        console.log('Get students error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.get('/:id', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+router.get('/:id', auth, function(req, res) {
     try {
-        var student = db.get('SELECT * FROM students WHERE id = ?', [parseInt(req.params.id)]);
+        var db = req.app.get('db');
+        var student = db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.id);
         if (!student) return res.status(404).json({ error: 'Student not found' });
         res.json(student);
-    } catch (err) {
-        console.error('Get student error:', err);
-        res.status(500).json({ error: 'Failed to load student' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.post('/', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+router.post('/', auth, function(req, res) {
     try {
-        var body = req.body;
-        if (!body.first_name || !body.last_name || !body.gender) {
-            return res.status(400).json({ error: 'First name, last name, and gender are required.' });
-        }
-        var qrCode = body.first_name + ' ' + body.last_name;
-        var result = db.run('INSERT INTO students (first_name, middle_name, last_name, gender, lrn, guardian_name, guardian_phone, qr_code, assigned_teacher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [body.first_name, body.middle_name || null, body.last_name, body.gender, body.lrn || null, body.guardian_name || null, body.guardian_phone || null, qrCode, user.id]);
-        res.status(201).json({ message: 'Student added successfully', id: result.lastInsertRowid, qr_code: qrCode });
-    } catch (err) {
-        console.error('Add student error:', err);
-        res.status(500).json({ error: 'Failed to add student' });
+        var db = req.app.get('db');
+        var full_name = req.body.full_name || '';
+        var sex = req.body.sex || '';
+        var lrn = req.body.lrn || '';
+        var guardian_name = req.body.guardian_name || '';
+        var guardian_contact = req.body.guardian_contact || '';
+        if (!full_name) return res.status(400).json({ error: 'Full name is required' });
+        var qrCode = 'QR-' + full_name.replace(/[^A-Z]/gi, '').substring(0, 10).toUpperCase() + '-' + Date.now();
+        var result = db.prepare('INSERT INTO students (full_name, sex, lrn, guardian_name, guardian_contact, qr_code) VALUES (?, ?, ?, ?, ?, ?)').run(full_name, sex, lrn, guardian_name, guardian_contact, qrCode);
+        res.json({ message: 'Student added', id: result.lastInsertRowid, qr_code: qrCode });
+    } catch (error) {
+        console.log('Add student error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.put('/:id', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+router.put('/:id', auth, function(req, res) {
     try {
-        var body = req.body;
-        if (!body.first_name || !body.last_name || !body.gender) {
-            return res.status(400).json({ error: 'First name, last name, and gender are required.' });
-        }
-        var qrCode = body.first_name + ' ' + body.last_name;
-        db.run('UPDATE students SET first_name = ?, middle_name = ?, last_name = ?, gender = ?, lrn = ?, guardian_name = ?, guardian_phone = ?, qr_code = ? WHERE id = ?',
-            [body.first_name, body.middle_name || null, body.last_name, body.gender, body.lrn || null, body.guardian_name || null, body.guardian_phone || null, qrCode, parseInt(req.params.id)]);
-        res.json({ message: 'Student updated successfully' });
-    } catch (err) {
-        console.error('Update student error:', err);
-        res.status(500).json({ error: 'Failed to update student' });
+        var db = req.app.get('db');
+        db.prepare('UPDATE students SET full_name = ?, sex = ?, guardian_name = ?, guardian_contact = ? WHERE id = ?').run(req.body.full_name || '', req.body.sex || '', req.body.guardian_name || '', req.body.guardian_contact || '', req.params.id);
+        res.json({ message: 'Student updated' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.delete('/:id', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+router.delete('/:id', auth, function(req, res) {
     try {
-        var id = parseInt(req.params.id);
-        db.run('DELETE FROM attendance WHERE student_id = ?', [id]);
-        db.run('DELETE FROM sms_logs WHERE student_id = ?', [id]);
-        db.run('DELETE FROM students WHERE id = ?', [id]);
-        res.json({ message: 'Student deleted successfully' });
-    } catch (err) {
-        console.error('Delete student error:', err);
-        res.status(500).json({ error: 'Failed to delete student' });
+        var db = req.app.get('db');
+        db.prepare('DELETE FROM students WHERE id = ?').run(req.params.id);
+        res.json({ message: 'Student deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

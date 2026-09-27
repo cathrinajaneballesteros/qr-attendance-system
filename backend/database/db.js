@@ -1,160 +1,142 @@
 
-var initSqlJs = require('sql.js');
-var bcrypt = require('bcryptjs');
-var path = require('path');
-var fs = require('fs');
+const initSqlJs = require('sql.js');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
 
 var db = null;
-var dbPath = path.join(__dirname, 'attendance.db');
+var dbPath = path.join(__dirname, '..', 'attendance.db');
 
-// Helper: run a query (INSERT, UPDATE, DELETE)
-function run(sql, params) {
-    if (!params) params = [];
-    db.run(sql, params);
-    saveDb();
-    return { lastInsertRowid: db.exec("SELECT last_insert_rowid()")[0].values[0][0] };
-}
-
-// Helper: get one row
-function get(sql, params) {
-    if (!params) params = [];
-    var stmt = db.prepare(sql);
-    stmt.bind(params);
-    var result = null;
-    if (stmt.step()) {
-        var cols = stmt.getColumnNames();
-        var vals = stmt.get();
-        result = {};
-        for (var i = 0; i < cols.length; i++) {
-            result[cols[i]] = vals[i];
-        }
-    }
-    stmt.free();
-    return result;
-}
-
-// Helper: get all rows
-function all(sql, params) {
-    if (!params) params = [];
-    var stmt = db.prepare(sql);
-    stmt.bind(params);
-    var results = [];
-    while (stmt.step()) {
-        var cols = stmt.getColumnNames();
-        var vals = stmt.get();
-        var row = {};
-        for (var i = 0; i < cols.length; i++) {
-            row[cols[i]] = vals[i];
-        }
-        results.push(row);
-    }
-    stmt.free();
-    return results;
-}
-
-// Save database to file
-function saveDb() {
-    try {
+function saveDB() {
+    if (db) {
         var data = db.export();
         var buffer = Buffer.from(data);
         fs.writeFileSync(dbPath, buffer);
-    } catch (err) {
-        console.error('Error saving database:', err);
     }
 }
 
-// Initialize database
+setInterval(function() { saveDB(); }, 30000);
+
 async function initDatabase() {
     var SQL = await initSqlJs();
 
-    // Load existing database or create new one
     if (fs.existsSync(dbPath)) {
-        try {
-            var fileBuffer = fs.readFileSync(dbPath);
-            db = new SQL.Database(fileBuffer);
-            console.log('Loaded existing database');
-        } catch (err) {
-            console.log('Creating new database (old file corrupted)');
-            db = new SQL.Database();
-        }
+        var fileBuffer = fs.readFileSync(dbPath);
+        db = new SQL.Database(fileBuffer);
+        console.log('Loaded existing database');
     } else {
         db = new SQL.Database();
         console.log('Created new database');
     }
 
-    // Create tables
-    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, full_name TEXT NOT NULL, role TEXT DEFAULT 'teacher', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    db.run("CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, lrn TEXT, first_name TEXT NOT NULL, middle_name TEXT, last_name TEXT NOT NULL, gender TEXT NOT NULL, guardian_name TEXT, guardian_phone TEXT, qr_code TEXT, assigned_teacher INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    db.run("CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER NOT NULL, date TEXT NOT NULL, status TEXT DEFAULT 'Present', time_in TEXT, time_out TEXT, recorded_by INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(student_id, date))");
-    db.run("CREATE TABLE IF NOT EXISTS sms_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER, phone_number TEXT, message TEXT, status TEXT DEFAULT 'sent', provider TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT DEFAULT 'teacher', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.run("CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, lrn TEXT, full_name TEXT NOT NULL, sex TEXT, guardian_name TEXT, guardian_contact TEXT, qr_code TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.run("CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER, date TEXT, time_in TEXT, status TEXT DEFAULT 'present', recorded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.run("CREATE TABLE IF NOT EXISTS sms_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id INTEGER, guardian_contact TEXT, message TEXT, status TEXT DEFAULT 'sent', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    db.run("CREATE TABLE IF NOT EXISTS sf2_progress (id INTEGER PRIMARY KEY AUTOINCREMENT, school_year TEXT, progress_data TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
-    // Seed admin
-    var adminExists = get('SELECT id FROM users WHERE username = ?', ['admin']);
-    if (!adminExists) {
-        var adminHash = bcrypt.hashSync('admin123', 10);
-        run('INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)', ['admin', adminHash, 'System Administrator', 'admin']);
-        console.log('Default admin created -> username: admin, password: admin123');
+    var adminCheck = db.exec("SELECT id FROM users WHERE username = 'admin'");
+    if (adminCheck.length === 0 || adminCheck[0].values.length === 0) {
+        var hashedAdmin = bcrypt.hashSync('admin123', 10);
+        db.run("INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)", ['Administrator', 'admin', hashedAdmin, 'admin']);
+        console.log('Default admin created: admin / admin123');
     }
 
-    // Seed teacher
-    var teacherExists = get('SELECT id FROM users WHERE username = ?', ['tifanny']);
-    if (!teacherExists) {
-        var teacherHash = bcrypt.hashSync('teacher123', 10);
-        run('INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)', ['tifanny', teacherHash, 'Tifanny Martin Aragon', 'teacher']);
-        console.log('Teacher created -> username: tifanny, password: teacher123');
+    var teacherCheck = db.exec("SELECT id FROM users WHERE username = 'teacher'");
+    if (teacherCheck.length === 0 || teacherCheck[0].values.length === 0) {
+        var hashedTeacher = bcrypt.hashSync('teacher123', 10);
+        db.run("INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)", ['Tifanny Martin Aragon', 'teacher', hashedTeacher, 'teacher']);
+        console.log('Default teacher created: teacher / teacher123');
     }
 
-    // Get teacher ID
-    var teacherUser = get('SELECT id FROM users WHERE username = ?', ['tifanny']);
-    var teacherId = teacherUser ? teacherUser.id : null;
-
-    // Seed 25 students
-    var studentCount = get('SELECT COUNT(*) as count FROM students', []);
-    if (studentCount.count === 0) {
-        var students = [
-            { first_name: 'ANGELITO', middle_name: 'LAPITAN', last_name: 'ANIN', gender: 'Male' },
-            { first_name: 'KHALED', middle_name: 'GAYAP', last_name: 'CALLENA', gender: 'Male' },
-            { first_name: 'IVAN', middle_name: 'VILLAMOR', last_name: 'DOTIMAS', gender: 'Male' },
-            { first_name: 'JHON', middle_name: 'PADILLA', last_name: 'DOTIMAS', gender: 'Male' },
-            { first_name: 'JUSTINE', middle_name: 'BLACE', last_name: 'GAYAP', gender: 'Male' },
-            { first_name: 'ANTHONY', middle_name: 'JR QUINTERO', last_name: 'HERANI', gender: 'Male' },
-            { first_name: 'GIDEON', middle_name: 'NATIVIDAD', last_name: 'LAPITAN', gender: 'Male' },
-            { first_name: 'YAEL', middle_name: 'NATIVIDAD', last_name: 'LAPITAN', gender: 'Male' },
-            { first_name: 'CHRISTIAN', middle_name: 'MANIBOY', last_name: 'LUMONTAD', gender: 'Male' },
-            { first_name: 'JOHN ROBERT', middle_name: 'DELA CRUZ', last_name: 'PACHOCA', gender: 'Male' },
-            { first_name: 'JERALD', middle_name: 'GULOY', last_name: 'PULANCO', gender: 'Male' },
-            { first_name: 'MARK ANGELO', middle_name: 'GAYAP', last_name: 'SORIANO', gender: 'Male' },
-            { first_name: 'MILAGROS', middle_name: 'RINGOR', last_name: 'AGOTO', gender: 'Female' },
-            { first_name: 'KRISTINE', middle_name: 'HALOG', last_name: 'ANCHETA', gender: 'Female' },
-            { first_name: 'ANGEL', middle_name: 'BESTROLLO', last_name: 'CARIAGA', gender: 'Female' },
-            { first_name: 'JANNAH ROSE', middle_name: 'ROBRIGADO', last_name: 'DELOS TRINOS', gender: 'Female' },
-            { first_name: 'RHIAN', middle_name: 'VIERNES', last_name: 'ESTRADA', gender: 'Female' },
-            { first_name: 'DARLYN FAITH', middle_name: 'CANAS', last_name: 'GAYAP', gender: 'Female' },
-            { first_name: 'JOHANNA', middle_name: 'BLACE', last_name: 'GAYAP', gender: 'Female' },
-            { first_name: 'PRINCESS', middle_name: 'GAYAP', last_name: 'LAUREANO', gender: 'Female' },
-            { first_name: 'ERICA MAY', middle_name: 'GARBON', last_name: 'LINDE', gender: 'Female' },
-            { first_name: 'ALEXIES', middle_name: 'UDARBE', last_name: 'NATIVIDAD', gender: 'Female' },
-            { first_name: 'NAMI SHANAIAH', middle_name: 'OBEDOZA', last_name: 'SINGH', gender: 'Female' },
-            { first_name: 'KIESHA FAITH', middle_name: 'PULANCO', last_name: 'VILLANUEVA', gender: 'Female' },
-            { first_name: 'JHAIREEN ANTHONET', middle_name: 'DELA CRUZ', last_name: 'VILORIA', gender: 'Female' }
+    var studentCheck = db.exec("SELECT COUNT(*) as count FROM students");
+    var studentCount = studentCheck[0].values[0][0];
+    if (studentCount === 0) {
+        var males = [
+            'ANIN, ANGELITO LAPITAN',
+            'CALLENA, KHALED GAYAP',
+            'DOTIMAS, IVAN VILLAMOR',
+            'DOTIMAS, JHON PADILLA',
+            'GAYAP, JUSTINE BLACE',
+            'HERANI, ANTHONY JR QUINTERO',
+            'LAPITAN, GIDEON NATIVIDAD',
+            'LAPITAN, YAEL NATIVIDAD',
+            'LUMONTAD, CHRISTIAN MANIBOY',
+            'PACHOCA, JOHN ROBERT DELA CRUZ',
+            'PULANCO, JERALD GULOY',
+            'SORIANO, MARK ANGELO GAYAP'
         ];
-
-        for (var i = 0; i < students.length; i++) {
-            var s = students[i];
-            var qrCode = s.first_name + ' ' + s.last_name;
-            run('INSERT INTO students (first_name, middle_name, last_name, gender, qr_code, assigned_teacher) VALUES (?, ?, ?, ?, ?, ?)', [s.first_name, s.middle_name, s.last_name, s.gender, qrCode, teacherId]);
+        var females = [
+            'AGOTO, MILAGROS RINGOR',
+            'ANCHETA, KRISTINE HALOG',
+            'CARIAGA, ANGEL BESTROLLO',
+            'DELOS TRINOS, JANNAH ROSE ROBRIGADO',
+            'ESTRADA, RHIAN VIERNES',
+            'GAYAP, DARLYN FAITH CANAS',
+            'GAYAP, JOHANNA BLACE',
+            'LAUREANO, PRINCESS GAYAP',
+            'LINDE, ERICA MAY GARBON',
+            'NATIVIDAD, ALEXIES UDARBE',
+            'SINGH, NAMI SHANAIAH OBEDOZA',
+            'VILLANUEVA, KIESHA FAITH PULANCO',
+            'VILORIA, JHAIREEN ANTHONET DELA CRUZ'
+        ];
+        for (var i = 0; i < males.length; i++) {
+            var qr = 'QR-' + males[i].replace(/[^A-Z]/g, '').substring(0, 12) + '-M' + (i + 1);
+            db.run("INSERT INTO students (full_name, sex, qr_code) VALUES (?, ?, ?)", [males[i], 'M', qr]);
         }
-        console.log('Seeded 25 students (12 Male, 13 Female) assigned to teacher Tifanny Martin Aragon');
+        for (var j = 0; j < females.length; j++) {
+            var qr2 = 'QR-' + females[j].replace(/[^A-Z]/g, '').substring(0, 12) + '-F' + (j + 1);
+            db.run("INSERT INTO students (full_name, sex, qr_code) VALUES (?, ?, ?)", [females[j], 'F', qr2]);
+        }
+        console.log('Seeded ' + (males.length + females.length) + ' students from SF2');
     }
 
-    saveDb();
-    console.log('Database initialized successfully');
+    saveDB();
+    console.log('Database initialized');
+    return wrapDatabase(db);
 }
 
-module.exports = {
-    initDatabase: initDatabase,
-    run: run,
-    get: get,
-    all: all
-};
+function wrapDatabase(sqlDb) {
+    return {
+        prepare: function(sql) {
+            return {
+                get: function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    try {
+                        var stmt = sqlDb.prepare(sql);
+                        if (args.length > 0) stmt.bind(args);
+                        if (stmt.step()) { var row = stmt.getAsObject(); stmt.free(); return row; }
+                        stmt.free();
+                        return undefined;
+                    } catch(e) { console.log('DB get error:', e.message); return undefined; }
+                },
+                all: function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    try {
+                        var results = [];
+                        var stmt = sqlDb.prepare(sql);
+                        if (args.length > 0) stmt.bind(args);
+                        while (stmt.step()) { results.push(stmt.getAsObject()); }
+                        stmt.free();
+                        return results;
+                    } catch(e) { console.log('DB all error:', e.message); return []; }
+                },
+                run: function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    try {
+                        if (args.length > 0) { sqlDb.run(sql, args); } else { sqlDb.run(sql); }
+                        saveDB();
+                        var lastId = sqlDb.exec("SELECT last_insert_rowid()");
+                        return { lastInsertRowid: lastId[0].values[0][0] };
+                    } catch(e) { console.log('DB run error:', e.message); return { lastInsertRowid: 0 }; }
+                }
+            };
+        },
+        exec: function(sql) { sqlDb.run(sql); saveDB(); },
+        pragma: function() {}
+    };
+}
+
+module.exports = { initDatabase: initDatabase };
 

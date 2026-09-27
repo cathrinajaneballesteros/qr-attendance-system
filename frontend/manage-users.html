@@ -4,127 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Manage Teachers - QR Attendance System</title>
+    <title>Manage Teachers - QR Attendance</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
         body { padding: 15px; }
-        .users-container { max-width: 900px; margin: 0 auto; }
-        .add-section { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
-        .add-section h2 { color: #880e4f; font-size: 1.1em; margin-bottom: 15px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .form-grid .form-group label { display: block; color: #666; font-size: 0.8em; margin-bottom: 5px; font-weight: bold; }
-        .form-grid .form-group input, .form-grid .form-group select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #f8bbd0; background: #fff5f7; color: #333; font-size: 0.9em; }
-        .form-grid .form-group input:focus, .form-grid .form-group select:focus { border-color: #e91e63; outline: none; }
-        .btn-add { background: linear-gradient(135deg, #880e4f, #ad1457); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
-        .btn-add:hover { transform: scale(1.02); }
-        .add-result { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 0.85em; display: none; }
-        .add-result.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-        .add-result.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-
-        .list-section { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
-        .list-section h2 { color: #880e4f; font-size: 1em; margin-bottom: 15px; }
-        .user-table { width: 100%; border-collapse: collapse; }
-        .user-table th { background: #fce4ec; color: #880e4f; padding: 10px 12px; text-align: left; font-size: 0.8em; }
-        .user-table td { padding: 10px 12px; border-bottom: 1px solid #fce4ec; color: #555; font-size: 0.8em; }
-        .user-table tr:hover { background: #fff5f7; }
-        .role-badge { padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: bold; }
-        .role-badge.admin { background: #fce4ec; color: #880e4f; }
-        .role-badge.teacher { background: #e3f2fd; color: #1565c0; }
-        .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75em; font-weight: bold; }
-        .btn-delete:hover { background: #c62828; color: white; }
-
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .section-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
+        .section-card h2 { color: #880e4f; margin-bottom: 15px; font-size: 1.1em; }
+        .add-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; padding: 15px; background: #fff5f7; border-radius: 10px; }
+        .add-form input, .add-form select { padding: 10px; border: 2px solid #fce4ec; border-radius: 8px; font-size: 0.9em; }
+        .add-form input:focus, .add-form select:focus { border-color: #e91e63; outline: none; }
+        .add-form button { grid-column: 1 / -1; padding: 12px; background: #880e4f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95em; }
+        .add-form button:hover { background: #ad1457; }
+        .msg { padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none; font-size: 0.85em; text-align: center; }
+        .msg-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .msg-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th { background: #fce4ec; color: #880e4f; padding: 10px 8px; text-align: left; font-size: 0.8em; }
+        td { padding: 8px; border-bottom: 1px solid #fce4ec; }
+        tr:hover { background: #fff5f7; }
+        .btn-delete { padding: 6px 12px; background: #c62828; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
+        .btn-delete:hover { background: #b71c1c; }
+        @media (max-width: 480px) { .add-form { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <div class="users-container">
-        <!-- Admin nav -->
+    <div class="container">
         <div class="nav-bar">
-            <a href="admin-dashboard.html">Admin Panel</a>
+            <a href="admin-dashboard.html">Dashboard</a>
             <a href="manage-users.html" class="active">Manage Teachers</a>
             <a href="sf2-progress.html">SF2 Submission Progress</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
-
-        <div class="add-section">
+        <div class="section-card">
             <h2>Add New Teacher</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="fullName" autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="text" id="password" autocomplete="new-password">
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select id="role">
-                        <option value="teacher">Teacher</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
+            <div class="msg" id="formMsg"></div>
+            <div class="add-form">
+                <input type="text" id="fullName" placeholder="Full Name">
+                <input type="text" id="newUsername" placeholder="Username">
+                <input type="password" id="newPassword" placeholder="Password">
+                <select id="newRole">
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button onclick="addUser()">Add Teacher</button>
             </div>
-            <button class="btn-add" onclick="addUser()">Add Teacher</button>
-            <div class="add-result" id="addResult"></div>
         </div>
-
-        <div class="list-section">
-            <h2>All Registered Teachers</h2>
+        <div class="section-card">
+            <h2>All Users</h2>
             <div class="table-wrapper">
-                <table class="user-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Full Name</th>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <tr><td colspan="5" class="no-data">Loading teachers...</td></tr>
-                    </tbody>
+                <table>
+                    <thead><tr><th>No.</th><th>Full Name</th><th>Username</th><th>Role</th><th>Action</th></tr></thead>
+                    <tbody id="usersBody"><tr><td colspan="5" class="no-data">Loading users...</td></tr></tbody>
                 </table>
             </div>
         </div>
     </div>
-
     <script>
         var token = localStorage.getItem('token');
         var user = null;
         if (!token) { window.location.href = 'index.html'; }
         try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-
-        if (!user || user.role !== 'admin') { window.location.href = 'dashboard.html'; }
-
-        window.addEventListener('load', function() {
-            document.getElementById('fullName').value = '';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('role').value = 'teacher';
-        });
+        if (user && user.role !== 'admin') { window.location.href = 'dashboard.html'; }
 
         function confirmLogout(e) {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
         }
 
+        function showMsg(text, type) {
+            var el = document.getElementById('formMsg');
+            el.textContent = text;
+            el.className = 'msg';
+            el.classList.add(type === 'success' ? 'msg-success' : 'msg-error');
+            el.style.display = 'block';
+            setTimeout(function() { el.style.display = 'none'; }, 4000);
+        }
+
         async function addUser() {
             var fullName = document.getElementById('fullName').value.trim();
-            var username = document.getElementById('username').value.trim();
-            var password = document.getElementById('password').value;
-            var role = document.getElementById('role').value;
-            var resultDiv = document.getElementById('addResult');
+            var username = document.getElementById('newUsername').value.trim();
+            var password = document.getElementById('newPassword').value;
+            var role = document.getElementById('newRole').value;
 
             if (!fullName || !username || !password) {
-                resultDiv.className = 'add-result error';
-                resultDiv.textContent = 'All fields are required.';
-                resultDiv.style.display = 'block';
+                showMsg('Please fill in all fields', 'error');
                 return;
             }
 
@@ -134,72 +98,70 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ full_name: fullName, username: username, password: password, role: role })
                 });
-
                 var data = await response.json();
                 if (response.ok) {
-                    resultDiv.className = 'add-result success';
-                    resultDiv.textContent = 'Teacher ' + fullName + ' added successfully!';
-                    resultDiv.style.display = 'block';
+                    showMsg('Teacher added successfully!', 'success');
                     document.getElementById('fullName').value = '';
-                    document.getElementById('username').value = '';
-                    document.getElementById('password').value = '';
-                    document.getElementById('role').value = 'teacher';
+                    document.getElementById('newUsername').value = '';
+                    document.getElementById('newPassword').value = '';
                     loadUsers();
                 } else {
-                    resultDiv.className = 'add-result error';
-                    resultDiv.textContent = data.error || 'Failed to add teacher.';
-                    resultDiv.style.display = 'block';
+                    showMsg(data.error || 'Failed to add teacher', 'error');
                 }
             } catch (err) {
-                resultDiv.className = 'add-result error';
-                resultDiv.textContent = 'Connection error. Please try again.';
-                resultDiv.style.display = 'block';
+                showMsg('Connection error. Is the server running?', 'error');
             }
         }
 
-        async function loadUsers() {
-            var tbody = document.getElementById('usersTableBody');
-            try {
-                var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (response.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
-                if (!response.ok) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load teachers.</td></tr>'; return; }
-                var users = await response.json();
-                if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No teachers found.</td></tr>'; return; }
-
-                var html = '';
-                for (var i = 0; i < users.length; i++) {
-                    var u = users[i];
-                    var roleClass = u.role === 'admin' ? 'admin' : 'teacher';
-                    html += '<tr>';
-                    html += '<td>' + (i + 1) + '</td>';
-                    html += '<td>' + (u.full_name || '-') + '</td>';
-                    html += '<td>' + u.username + '</td>';
-                    html += '<td><span class="role-badge ' + roleClass + '">' + u.role + '</span></td>';
-                    html += '<td>';
-                    if (u.username !== 'admin') {
-                        html += '<button class="btn-delete" onclick="deleteUser(' + u.id + ', \'' + (u.full_name || u.username).replace(/'/g, "\\'") + '\')">Delete</button>';
-                    } else {
-                        html += '<span style="color:#999; font-size:0.75em;">Default</span>';
-                    }
-                    html += '</td>';
-                    html += '</tr>';
-                }
-                tbody.innerHTML = html;
-            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Could not load teachers.</td></tr>'; }
-        }
-
-        async function deleteUser(id, name) {
-            if (!confirm('Are you sure you want to delete: ' + name + '?')) return;
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
             try {
                 var response = await fetch('/api/auth/users/' + id, {
                     method: 'DELETE',
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
-                if (response.ok) { loadUsers(); }
-                else { alert('Failed to delete teacher.'); }
-            } catch (err) { alert('Connection error.'); }
+                var data = await response.json();
+                if (response.ok) {
+                    showMsg('User deleted successfully', 'success');
+                    loadUsers();
+                } else {
+                    showMsg(data.error || 'Failed to delete user', 'error');
+                }
+            } catch (err) {
+                showMsg('Connection error', 'error');
+            }
         }
 
+        async function loadUsers() {
+            try {
+                var response = await fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!response.ok) {
+                    document.getElementById('usersBody').innerHTML = '<tr><td colspan="5" class="no-data">Failed to load users</td></tr>';
+                    return;
+                }
+                var users = await response.json();
+                var tbody = document.getElementById('usersBody');
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No users found</td></tr>';
+                    return;
+                }
+                var html = '';
+                for (var i = 0; i < users.length; i++) {
+                    var u = users[i];
+                    var deleteBtn = u.username === 'admin' ? '<span style="color:#999;">Protected</span>' : '<button class="btn-delete" onclick="deleteUser(' + u.id + ')">Delete</button>';
+                    html += '<tr>';
+                    html += '<td>' + (i + 1) + '</td>';
+                    html += '<td>' + (u.full_name || '') + '</td>';
+                    html += '<td>' + u.username + '</td>';
+                    html += '<td>' + u.role + '</td>';
+                    html += '<td>' + deleteBtn + '</td>';
+                    html += '</tr>';
+                }
+                tbody.innerHTML = html;
+            } catch (err) {
+                document.getElementById('usersBody').innerHTML = '<tr><td colspan="5" class="no-data">Error loading users</td></tr>';
+            }
+        }
         loadUsers();
     </script>
 </body>

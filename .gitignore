@@ -1,3 +1,5 @@
-﻿node_modules/
-database/attendance.db
+﻿
+node_modules/
+attendance.db
 .env
+

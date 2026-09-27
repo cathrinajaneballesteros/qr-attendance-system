@@ -1,227 +1,185 @@
 
-var express = require('express');
-var router = express.Router();
-var db = require('../database/db');
-var jwt = require('jsonwebtoken');
-var JWT_SECRET = process.env.JWT_SECRET || 'qr-attendance-secret-key-2025';
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
 
-function checkAuth(req) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+router.get('/report', auth, function(req, res) {
     try {
-        return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-    } catch (e) { return null; }
-}
-
-router.get('/summary', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        var today = new Date().toISOString().split('T')[0];
-        var totalStudents = db.get('SELECT COUNT(*) as count FROM students', []).count || 0;
-        var maleCount = db.get("SELECT COUNT(*) as count FROM students WHERE gender = 'Male'", []).count || 0;
-        var femaleCount = db.get("SELECT COUNT(*) as count FROM students WHERE gender = 'Female'", []).count || 0;
-        var todayPresent = db.get("SELECT COUNT(*) as count FROM attendance WHERE date = ? AND (status = 'Present' OR status = 'Late')", [today]).count || 0;
-        var todayAbsent = totalStudents - todayPresent;
-        var attendanceRate = totalStudents > 0 ? ((todayPresent / totalStudents) * 100).toFixed(1) : '0.0';
-
-        res.json({ total_students: totalStudents, male: maleCount, female: femaleCount, today_present: todayPresent, today_absent: todayAbsent, attendance_rate: attendanceRate });
-    } catch (err) {
-        console.error('Summary error:', err);
-        res.status(500).json({ error: 'Failed to load summary' });
-    }
-});
-
-router.get('/report', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        var month = parseInt(req.query.month) || (new Date().getMonth() + 1);
-        var year = parseInt(req.query.year) || new Date().getFullYear();
-
-        var students = db.all("SELECT * FROM students ORDER BY gender ASC, last_name ASC", []);
-        var monthStr = year + '-' + (month < 10 ? '0' + month : month);
-        var attendance = db.all("SELECT * FROM attendance WHERE date LIKE ?", [monthStr + '%']);
+        var db = req.app.get('db');
+        var month = req.query.month || new Date().toISOString().substring(0, 7);
+        var students = db.prepare('SELECT * FROM students ORDER BY sex, full_name').all();
+        var attendance = db.prepare("SELECT a.*, s.full_name, s.sex FROM attendance a JOIN students s ON a.student_id = s.id WHERE a.date LIKE ?").all(month + '%');
 
         var attendanceMap = {};
         for (var i = 0; i < attendance.length; i++) {
-            var a = attendance[i];
-            if (!attendanceMap[a.student_id]) attendanceMap[a.student_id] = {};
-            attendanceMap[a.student_id][a.date] = a.status;
+            var rec = attendance[i];
+            if (!attendanceMap[rec.student_id]) attendanceMap[rec.student_id] = {};
+            var day = parseInt(rec.date.split('-')[2]);
+            attendanceMap[rec.student_id][day] = rec.status;
         }
 
-        var daysInMonth = new Date(year, month, 0).getDate();
-        var males = [];
-        var females = [];
-
-        for (var j = 0; j < students.length; j++) {
-            var s = students[j];
-            var fullName = s.last_name + ', ' + s.first_name + (s.middle_name ? ' ' + s.middle_name : '');
-            var dailyAttendance = {};
-            var totalPresent = 0;
-            var totalAbsent = 0;
-
-            for (var d = 1; d <= daysInMonth; d++) {
-                var dateStr = year + '-' + (month < 10 ? '0' + month : month) + '-' + (d < 10 ? '0' + d : d);
-                var dayOfWeek = new Date(year, month - 1, d).getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) { dailyAttendance[d] = 'weekend'; continue; }
-                if (attendanceMap[s.id] && attendanceMap[s.id][dateStr]) {
-                    var status = attendanceMap[s.id][dateStr];
-                    if (status === 'Present' || status === 'Late') { dailyAttendance[d] = 'present'; totalPresent++; }
-                    else { dailyAttendance[d] = 'absent'; totalAbsent++; }
-                } else { dailyAttendance[d] = 'no_record'; }
-            }
-
-            var studentData = { id: s.id, name: fullName, first_name: s.first_name, middle_name: s.middle_name, last_name: s.last_name, gender: s.gender, lrn: s.lrn, daily: dailyAttendance, total_present: totalPresent, total_absent: totalAbsent };
-            if (s.gender === 'Male') males.push(studentData);
-            else females.push(studentData);
+        var maleStudents = [];
+        var femaleStudents = [];
+        for (var s = 0; s < students.length; s++) {
+            var st = students[s];
+            var record = { id: st.id, name: st.full_name, sex: st.sex, attendance: attendanceMap[st.id] || {} };
+            if (st.sex === 'M') maleStudents.push(record);
+            else femaleStudents.push(record);
         }
 
-        var schoolDays = 0;
-        for (var sd = 1; sd <= daysInMonth; sd++) {
-            var dow = new Date(year, month - 1, sd).getDay();
-            if (dow !== 0 && dow !== 6) schoolDays++;
-        }
-
-        var malePresentTotal = 0, maleAbsentTotal = 0;
-        for (var m = 0; m < males.length; m++) { malePresentTotal += males[m].total_present; maleAbsentTotal += males[m].total_absent; }
-        var femalePresentTotal = 0, femaleAbsentTotal = 0;
-        for (var f = 0; f < females.length; f++) { femalePresentTotal += females[f].total_present; femaleAbsentTotal += females[f].total_absent; }
-
-        var totalPresentAll = malePresentTotal + femalePresentTotal;
-        var totalAbsentAll = maleAbsentTotal + femaleAbsentTotal;
-        var overallRate = (males.length + females.length) * schoolDays > 0 ? ((totalPresentAll / ((males.length + females.length) * schoolDays)) * 100).toFixed(1) : '0.0';
-
-        res.json({
-            month: month, year: year, school_days: schoolDays, days_in_month: daysInMonth,
-            males: males, females: females,
-            summary: { total_students: males.length + females.length, male_count: males.length, female_count: females.length, male_present: malePresentTotal, male_absent: maleAbsentTotal, female_present: femalePresentTotal, female_absent: femaleAbsentTotal, total_present: totalPresentAll, total_absent: totalAbsentAll, attendance_rate: overallRate },
-            school_info: { school_id: '102056', school_name: 'Sta. Rosa ES', grade: '6', section: 'Great Geniuses', school_year: '2025-2026', adviser: 'Tifanny Martin Aragon', school_head: 'MC Riz Templeton Buen' }
-        });
-    } catch (err) {
-        console.error('SF2 report error:', err);
-        res.status(500).json({ error: 'Failed to generate SF2 report' });
+        res.json({ month: month, male: maleStudents, female: femaleStudents, total: students.length });
+    } catch (error) {
+        console.log('SF2 report error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.get('/download', function(req, res) {
-    var user = checkAuth(req);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+router.get('/summary', auth, function(req, res) {
+    try {
+        var db = req.app.get('db');
+        var today = new Date().toISOString().split('T')[0];
+        var totalStudents = db.prepare('SELECT COUNT(*) as count FROM students').get();
+        var presentToday = db.prepare('SELECT COUNT(*) as count FROM attendance WHERE date = ?').get(today);
+        var total = totalStudents ? totalStudents.count : 0;
+        var present = presentToday ? presentToday.count : 0;
+        res.json({ total_students: total, present_today: present, absent_today: total - present, attendance_rate: total > 0 ? Math.round((present / total) * 100) : 0 });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.get('/download', auth, function(req, res) {
     try {
         var ExcelJS = require('exceljs');
-        var month = parseInt(req.query.month) || (new Date().getMonth() + 1);
-        var year = parseInt(req.query.year) || new Date().getFullYear();
-        var months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        var monthName = months[month];
+        var db = req.app.get('db');
+        var month = req.query.month || new Date().toISOString().substring(0, 7);
+        var monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        var parts = month.split('-');
+        var monthName = monthNames[parseInt(parts[1])] || '';
+        var year = parts[0];
 
-        var students = db.all("SELECT * FROM students ORDER BY gender ASC, last_name ASC", []);
-        var males = students.filter(function(s) { return s.gender === 'Male'; });
-        var females = students.filter(function(s) { return s.gender === 'Female'; });
+        var students = db.prepare('SELECT * FROM students ORDER BY sex, full_name').all();
+        var attendance = db.prepare("SELECT * FROM attendance WHERE date LIKE ?").all(month + '%');
+        var maleStudents = students.filter(function(s) { return s.sex === 'M'; });
+        var femaleStudents = students.filter(function(s) { return s.sex === 'F'; });
 
-        var monthStr = year + '-' + (month < 10 ? '0' + month : month);
-        var attendance = db.all("SELECT * FROM attendance WHERE date LIKE ?", [monthStr + '%']);
-        var attendanceMap = {};
-        for (var i = 0; i < attendance.length; i++) {
-            var a = attendance[i];
-            if (!attendanceMap[a.student_id]) attendanceMap[a.student_id] = {};
-            attendanceMap[a.student_id][a.date] = a.status;
-        }
-
-        var daysInMonth = new Date(year, month, 0).getDate();
         var workbook = new ExcelJS.Workbook();
-        var sheet = workbook.addWorksheet(monthName);
+        var sheet = workbook.addWorksheet('SF2 ' + monthName);
 
         sheet.mergeCells('A1:AH1');
         sheet.getCell('A1').value = 'School Form 2 (SF2) Daily Attendance Report of Learners';
-        sheet.getCell('A1').font = { bold: true, size: 14 };
+        sheet.getCell('A1').font = { bold: true, size: 12 };
         sheet.getCell('A1').alignment = { horizontal: 'center' };
 
         sheet.mergeCells('A2:AH2');
         sheet.getCell('A2').value = '(This replaces Form 1, Form 2 & STS Form 4 - Absenteeism and Dropout Profile)';
         sheet.getCell('A2').alignment = { horizontal: 'center' };
-        sheet.getCell('A2').font = { size: 9, italic: true };
+        sheet.getCell('A2').font = { size: 8, italic: true };
 
-        sheet.getCell('A3').value = 'School ID:'; sheet.getCell('F3').value = '102056';
-        sheet.getCell('A4').value = 'School Name:'; sheet.getCell('F4').value = 'Sta. Rosa ES';
-        sheet.getCell('L3').value = 'Grade:'; sheet.getCell('N3').value = '6';
-        sheet.getCell('L4').value = 'Section:'; sheet.getCell('N4').value = 'Great Geniuses';
-        sheet.getCell('T3').value = 'School Year:'; sheet.getCell('V3').value = '2025-2026';
-        sheet.getCell('T4').value = 'Month:'; sheet.getCell('V4').value = monthName + ' ' + year;
+        sheet.getCell('A3').value = 'School: Sta. Rosa ES';
+        sheet.getCell('D3').value = 'School ID: 102056';
+        sheet.getCell('H3').value = 'School Year: 2026-2027';
+        sheet.getCell('N3').value = 'Grade Level: Grade 6';
+        sheet.getCell('T3').value = 'Section: GREAT GENIUSES';
+        sheet.getCell('Z3').value = 'Report for: ' + monthName.toUpperCase();
 
-        var headerRow = 6;
-        sheet.getCell('A' + headerRow).value = 'No.';
-        sheet.getCell('B' + headerRow).value = 'NAME (Last Name, First Name, Middle Name)';
-        for (var d = 1; d <= daysInMonth; d++) {
-            sheet.getCell(headerRow, d + 2).value = d;
-            sheet.getCell(headerRow, d + 2).alignment = { horizontal: 'center' };
-            sheet.getCell(headerRow, d + 2).font = { bold: true, size: 9 };
-        }
-        var totalCol = daysInMonth + 3;
-        sheet.getCell(headerRow, totalCol).value = 'TOTAL PRESENT';
-        sheet.getCell(headerRow, totalCol + 1).value = 'TOTAL ABSENT';
+        var headerRow = sheet.addRow([]);
+        headerRow.getCell(1).value = 'No.';
+        headerRow.getCell(2).value = 'LEARNER NAME (Last, First, Middle)';
+        headerRow.getCell(3).value = 'Sex';
+        for (var d = 1; d <= 31; d++) { headerRow.getCell(d + 3).value = d; }
+        headerRow.getCell(35).value = 'ABSENT';
+        headerRow.getCell(36).value = 'PRESENT';
+        headerRow.font = { bold: true, size: 8 };
 
-        var row = headerRow + 1;
-        sheet.getCell('A' + row).value = 'MALE'; sheet.getCell('A' + row).font = { bold: true, color: { argb: 'FF0000FF' } }; row++;
+        var maleLabel = sheet.addRow([]);
+        maleLabel.getCell(1).value = 'MALE';
+        maleLabel.font = { bold: true };
 
-        for (var mi = 0; mi < males.length; mi++) {
-            var ms = males[mi];
-            sheet.getCell('A' + row).value = mi + 1;
-            sheet.getCell('B' + row).value = ms.last_name + ', ' + ms.first_name + (ms.middle_name ? ' ' + ms.middle_name : '');
-            var mPresent = 0, mAbsent = 0;
-            for (var md = 1; md <= daysInMonth; md++) {
-                var dateStr = year + '-' + (month < 10 ? '0' + month : month) + '-' + (md < 10 ? '0' + md : md);
-                var dayOfWeek = new Date(year, month - 1, md).getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) { sheet.getCell(row, md + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; }
-                else if (attendanceMap[ms.id] && attendanceMap[ms.id][dateStr]) {
-                    if (attendanceMap[ms.id][dateStr] === 'Present' || attendanceMap[ms.id][dateStr] === 'Late') { sheet.getCell(row, md + 2).value = '\u2713'; sheet.getCell(row, md + 2).font = { color: { argb: 'FF00B050' } }; mPresent++; }
-                    else { sheet.getCell(row, md + 2).value = 'X'; sheet.getCell(row, md + 2).font = { color: { argb: 'FFFF0000' } }; mAbsent++; }
+        for (var mi = 0; mi < maleStudents.length; mi++) {
+            var ms = maleStudents[mi];
+            var mRow = sheet.addRow([]);
+            mRow.getCell(1).value = mi + 1;
+            mRow.getCell(2).value = ms.full_name;
+            mRow.getCell(3).value = 'M';
+            var mPresent = 0;
+            for (var day = 1; day <= 31; day++) {
+                var dateStr = month + '-' + (day < 10 ? '0' : '') + day;
+                var found = false;
+                for (var a = 0; a < attendance.length; a++) {
+                    if (attendance[a].student_id === ms.id && attendance[a].date === dateStr) { found = true; break; }
                 }
-                sheet.getCell(row, md + 2).alignment = { horizontal: 'center' };
+                if (found) { mRow.getCell(day + 3).value = ''; mPresent++; }
             }
-            sheet.getCell(row, totalCol).value = mPresent; sheet.getCell(row, totalCol + 1).value = mAbsent; row++;
+            mRow.getCell(35).value = 0;
+            mRow.getCell(36).value = mPresent;
         }
 
-        sheet.getCell('A' + row).value = 'FEMALE'; sheet.getCell('A' + row).font = { bold: true, color: { argb: 'FFFF00FF' } }; row++;
+        var femaleLabel = sheet.addRow([]);
+        femaleLabel.getCell(1).value = 'FEMALE';
+        femaleLabel.font = { bold: true };
 
-        for (var fi = 0; fi < females.length; fi++) {
-            var fs = females[fi];
-            sheet.getCell('A' + row).value = fi + 1;
-            sheet.getCell('B' + row).value = fs.last_name + ', ' + fs.first_name + (fs.middle_name ? ' ' + fs.middle_name : '');
-            var fPresent = 0, fAbsent = 0;
-            for (var fd = 1; fd <= daysInMonth; fd++) {
-                var fDateStr = year + '-' + (month < 10 ? '0' + month : month) + '-' + (fd < 10 ? '0' + fd : fd);
-                var fDayOfWeek = new Date(year, month - 1, fd).getDay();
-                if (fDayOfWeek === 0 || fDayOfWeek === 6) { sheet.getCell(row, fd + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; }
-                else if (attendanceMap[fs.id] && attendanceMap[fs.id][fDateStr]) {
-                    if (attendanceMap[fs.id][fDateStr] === 'Present' || attendanceMap[fs.id][fDateStr] === 'Late') { sheet.getCell(row, fd + 2).value = '\u2713'; sheet.getCell(row, fd + 2).font = { color: { argb: 'FF00B050' } }; fPresent++; }
-                    else { sheet.getCell(row, fd + 2).value = 'X'; sheet.getCell(row, fd + 2).font = { color: { argb: 'FFFF0000' } }; fAbsent++; }
+        for (var fi = 0; fi < femaleStudents.length; fi++) {
+            var fs2 = femaleStudents[fi];
+            var fRow = sheet.addRow([]);
+            fRow.getCell(1).value = fi + 1;
+            fRow.getCell(2).value = fs2.full_name;
+            fRow.getCell(3).value = 'F';
+            var fPresent = 0;
+            for (var day2 = 1; day2 <= 31; day2++) {
+                var dateStr2 = month + '-' + (day2 < 10 ? '0' : '') + day2;
+                var found2 = false;
+                for (var a2 = 0; a2 < attendance.length; a2++) {
+                    if (attendance[a2].student_id === fs2.id && attendance[a2].date === dateStr2) { found2 = true; break; }
                 }
-                sheet.getCell(row, fd + 2).alignment = { horizontal: 'center' };
+                if (found2) { fRow.getCell(day2 + 3).value = ''; fPresent++; }
             }
-            sheet.getCell(row, totalCol).value = fPresent; sheet.getCell(row, totalCol + 1).value = fAbsent; row++;
+            fRow.getCell(35).value = 0;
+            fRow.getCell(36).value = fPresent;
         }
 
-        row++;
-        sheet.getCell('A' + row).value = 'SUMMARY'; sheet.getCell('A' + row).font = { bold: true }; row++;
-        sheet.getCell('A' + row).value = 'Total Students: ' + (males.length + females.length);
-        sheet.getCell('L' + row).value = 'Male: ' + males.length;
-        sheet.getCell('T' + row).value = 'Female: ' + females.length;
-        row += 2;
-        sheet.getCell('A' + row).value = 'Prepared by:';
-        sheet.getCell('A' + (row + 2)).value = 'TIFANNY MARTIN ARAGON'; sheet.getCell('A' + (row + 3)).value = 'Class Adviser';
-        sheet.getCell('T' + row).value = 'Certified Correct:';
-        sheet.getCell('T' + (row + 2)).value = 'MC RIZ TEMPLETON BUEN'; sheet.getCell('T' + (row + 3)).value = 'School Head';
+        var summaryRow = sheet.addRow([]);
+        summaryRow.getCell(1).value = 'TOTAL';
+        summaryRow.getCell(2).value = (maleStudents.length + femaleStudents.length) + ' students';
+        summaryRow.font = { bold: true };
 
-        sheet.getColumn(1).width = 5; sheet.getColumn(2).width = 35;
-        for (var cw = 3; cw <= daysInMonth + 2; cw++) { sheet.getColumn(cw).width = 4; }
-        sheet.getColumn(totalCol).width = 14; sheet.getColumn(totalCol + 1).width = 14;
+        sheet.addRow([]);
+        var adviserRow = sheet.addRow([]);
+        adviserRow.getCell(2).value = 'Prepared by: TIFANNY MARTIN ARAGON (Class Adviser)';
+        var headRow = sheet.addRow([]);
+        headRow.getCell(2).value = 'Attested by: MC RIZ TEMPLETON BUEN (School Head)';
+
+        sheet.getColumn(1).width = 5;
+        sheet.getColumn(2).width = 35;
+        sheet.getColumn(3).width = 5;
+        for (var cw = 4; cw <= 34; cw++) { sheet.getColumn(cw).width = 4; }
+        sheet.getColumn(35).width = 8;
+        sheet.getColumn(36).width = 8;
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=SF2_' + monthName + '_' + year + '_Grade6_GreatGeniuses.xlsx');
+        res.setHeader('Content-Disposition', 'attachment; filename=SF2_Report_' + monthName + '_' + year + '.xlsx');
         workbook.xlsx.write(res).then(function() { res.end(); });
-    } catch (err) {
-        console.error('SF2 download error:', err);
-        res.status(500).json({ error: 'Failed to download SF2 report' });
+    } catch (error) {
+        console.log('SF2 download error:', error.message);
+        res.status(500).json({ error: 'Server error generating report' });
+    }
+});
+
+router.post('/progress', auth, function(req, res) {
+    try {
+        var db = req.app.get('db');
+        var schoolYear = req.body.school_year || '2026-2027';
+        var progressData = JSON.stringify(req.body.progress || {});
+        var existing = db.prepare('SELECT id FROM sf2_progress WHERE school_year = ?').get(schoolYear);
+        if (existing) {
+            db.prepare('UPDATE sf2_progress SET progress_data = ?, updated_at = CURRENT_TIMESTAMP WHERE school_year = ?').run(progressData, schoolYear);
+        } else {
+            db.prepare('INSERT INTO sf2_progress (school_year, progress_data) VALUES (?, ?)').run(schoolYear, progressData);
+        }
+        res.json({ message: 'Progress saved' });
+    } catch (error) {
+        console.log('Save progress error:', error.message);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
