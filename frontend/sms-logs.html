@@ -19,7 +19,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
         }
         .section-card {
@@ -34,9 +34,11 @@
             margin-bottom: 15px;
             font-size: 1.1em;
         }
+
+        /* Summary stats */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
         }
@@ -57,6 +59,70 @@
             color: #888;
             margin-top: 5px;
         }
+
+        /* Student attendance status section */
+        .attendance-check {
+            margin-bottom: 15px;
+        }
+        .attendance-check h3 {
+            color: #880e4f;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+        .student-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 8px;
+        }
+        .student-status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #fff5f7;
+            border-radius: 8px;
+            border: 1px solid #fce4ec;
+            font-size: 0.8em;
+        }
+        .student-status-item .student-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        .student-status-item .student-info .num {
+            color: #888;
+            font-size: 0.85em;
+            min-width: 25px;
+        }
+        .student-status-item .student-info .name {
+            font-weight: 600;
+            color: #333;
+        }
+        .student-status-item .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .badge-present {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .badge-absent {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .badge-time {
+            font-size: 0.75em;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        /* Dropdown for message type */
         .filter-row {
             display: flex;
             gap: 10px;
@@ -76,6 +142,17 @@
             border-color: #e91e63;
             outline: none;
         }
+        .filter-row select {
+            padding: 10px;
+            border: 2px solid #fce4ec;
+            border-radius: 8px;
+            font-size: 0.9em;
+            min-width: 160px;
+        }
+        .filter-row select:focus {
+            border-color: #e91e63;
+            outline: none;
+        }
         .filter-row button {
             padding: 10px 20px;
             background: #880e4f;
@@ -88,6 +165,64 @@
         .filter-row button:hover {
             background: #ad1457;
         }
+
+        /* Send SMS section */
+        .send-sms-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 12px;
+            background: #fff5f7;
+            border-radius: 8px;
+            border: 1px solid #fce4ec;
+        }
+        .send-sms-row select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px solid #fce4ec;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .send-sms-row select:focus {
+            border-color: #e91e63;
+            outline: none;
+        }
+        .send-sms-row .msg-select {
+            min-width: 250px;
+        }
+        .send-sms-row button {
+            padding: 10px 20px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .send-sms-row button:hover {
+            background: #1b5e20;
+        }
+        .send-msg {
+            text-align: center;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+            display: none;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .send-msg-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .send-msg-error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Table */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -135,9 +270,13 @@
             word-wrap: break-word;
             font-size: 0.8em;
         }
+
         @media (max-width: 768px) {
             .stats-row {
                 grid-template-columns: 1fr 1fr;
+            }
+            .student-status-grid {
+                grid-template-columns: 1fr;
             }
         }
         @media (max-width: 480px) {
@@ -167,6 +306,7 @@
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
 
+        <!-- Summary Stats -->
         <div class="section-card">
             <h2>SMS Notification Summary</h2>
             <div class="stats-row">
@@ -189,10 +329,47 @@
             </div>
         </div>
 
+        <!-- Student Attendance Status - Dropdown style -->
+        <div class="section-card attendance-check">
+            <h2>Student Attendance Status (Today)</h2>
+            <p style="font-size:0.8em;color:#888;margin-bottom:12px;">Check if each student is already in class or not. SMS is sent automatically when attendance is recorded.</p>
+            <div class="student-status-grid" id="studentStatusGrid">
+                <div class="no-data">Loading students...</div>
+            </div>
+        </div>
+
+        <!-- Send SMS manually -->
+        <div class="section-card">
+            <h2>Send SMS Notification</h2>
+            <div class="send-msg" id="sendMsg"></div>
+            <div class="send-sms-row">
+                <select id="smsStudentSelect">
+                    <option value="">-- Select Student --</option>
+                </select>
+                <select id="smsMessageSelect" class="msg-select">
+                    <option value="arrived">Student has arrived at school</option>
+                    <option value="absent">Student is absent today</option>
+                    <option value="late">Student arrived late today</option>
+                    <option value="dismissed">Student has been dismissed early</option>
+                    <option value="meeting">Parent-teacher meeting reminder</option>
+                    <option value="custom">Custom message...</option>
+                </select>
+                <button onclick="sendSMS()">Send SMS</button>
+            </div>
+            <input type="text" id="customMessage" placeholder="Type your custom message here..." style="display:none;width:100%;padding:10px;border:2px solid #fce4ec;border-radius:8px;margin-top:10px;font-size:0.9em;">
+        </div>
+
+        <!-- SMS Logs Table -->
         <div class="section-card">
             <h2>SMS Notification Logs</h2>
             <div class="filter-row">
                 <input type="text" id="searchInput" placeholder="Search by student name..." oninput="filterLogs()">
+                <select id="statusFilter" onchange="filterLogs()">
+                    <option value="all">All Status</option>
+                    <option value="sent">Sent</option>
+                    <option value="no_contact">No Contact</option>
+                    <option value="failed">Failed</option>
+                </select>
                 <button onclick="loadLogs()">Refresh</button>
             </div>
             <div class="table-wrapper">
@@ -228,6 +405,7 @@
         }
 
         var allLogs = [];
+        var allStudents = [];
 
         function confirmLogout(e) {
             e.preventDefault();
@@ -237,12 +415,30 @@
             }
         }
 
+        /* Show/hide custom message input */
+        document.getElementById('smsMessageSelect').addEventListener('change', function() {
+            var customInput = document.getElementById('customMessage');
+            if (this.value === 'custom') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        });
+
         function filterLogs() {
             var search = document.getElementById('searchInput').value.toLowerCase().trim();
+            var statusFilter = document.getElementById('statusFilter').value;
             var filtered = allLogs;
+
             if (search) {
-                filtered = allLogs.filter(function(log) {
+                filtered = filtered.filter(function(log) {
                     return (log.full_name || '').toLowerCase().indexOf(search) !== -1;
+                });
+            }
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(function(log) {
+                    return log.status === statusFilter;
                 });
             }
             renderLogs(filtered);
@@ -302,12 +498,127 @@
             document.getElementById('todayCount').textContent = todayCount;
         }
 
+        async function loadStudentStatus() {
+            try {
+                var studentsRes = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!studentsRes.ok) return;
+                var students = await studentsRes.json();
+                allStudents = students;
+
+                var attendanceRes = await fetch('/api/attendance/today', { headers: { 'Authorization': 'Bearer ' + token } });
+                var todayRecords = [];
+                if (attendanceRes.ok) {
+                    todayRecords = await attendanceRes.json();
+                }
+
+                /* Build attendance map */
+                var attendanceMap = {};
+                for (var a = 0; a < todayRecords.length; a++) {
+                    attendanceMap[todayRecords[a].student_id] = todayRecords[a];
+                }
+
+                /* Render student status grid */
+                var grid = document.getElementById('studentStatusGrid');
+                var html = '';
+                for (var i = 0; i < students.length; i++) {
+                    var s = students[i];
+                    var record = attendanceMap[s.id];
+                    var isPresent = !!record;
+
+                    html += '<div class="student-status-item">';
+                    html += '<div class="student-info">';
+                    html += '<span class="num">' + (i + 1) + '.</span>';
+                    html += '<span class="name">' + s.full_name + '</span>';
+                    html += '</div>';
+                    if (isPresent) {
+                        html += '<span class="status-badge badge-present">In Class <span class="badge-time">' + (record.time_in || '') + '</span></span>';
+                    } else {
+                        html += '<span class="status-badge badge-absent">Not Yet</span>';
+                    }
+                    html += '</div>';
+                }
+                grid.innerHTML = html;
+
+                /* Populate SMS student dropdown */
+                var select = document.getElementById('smsStudentSelect');
+                select.innerHTML = '<option value="">-- Select Student --</option>';
+                for (var j = 0; j < students.length; j++) {
+                    var opt = document.createElement('option');
+                    opt.value = students[j].id;
+                    opt.textContent = students[j].full_name;
+                    select.appendChild(opt);
+                }
+            } catch (err) {
+                console.log('Load student status error:', err);
+            }
+        }
+
+        async function sendSMS() {
+            var studentId = document.getElementById('smsStudentSelect').value;
+            var msgType = document.getElementById('smsMessageSelect').value;
+            var customMsg = document.getElementById('customMessage').value.trim();
+
+            if (!studentId) {
+                showSendMsg('Please select a student', 'error');
+                return;
+            }
+
+            var message = '';
+            var student = allStudents.find(function(s) { return s.id == studentId; });
+            var studentName = student ? student.full_name : 'Student';
+
+            if (msgType === 'arrived') {
+                message = 'Good day! ' + studentName + ' has arrived at school. - QRAttend, Sta. Rosa ES';
+            } else if (msgType === 'absent') {
+                message = 'Good day! ' + studentName + ' is absent today. Please inform the school if there is a reason. - QRAttend, Sta. Rosa ES';
+            } else if (msgType === 'late') {
+                message = 'Good day! ' + studentName + ' arrived late at school today. - QRAttend, Sta. Rosa ES';
+            } else if (msgType === 'dismissed') {
+                message = 'Good day! ' + studentName + ' has been dismissed early from school today. - QRAttend, Sta. Rosa ES';
+            } else if (msgType === 'meeting') {
+                message = 'Good day! This is a reminder for the parent-teacher meeting. Please attend. - QRAttend, Sta. Rosa ES';
+            } else if (msgType === 'custom') {
+                if (!customMsg) {
+                    showSendMsg('Please type a custom message', 'error');
+                    return;
+                }
+                message = customMsg;
+            }
+
+            try {
+                var response = await fetch('/api/sms/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ student_id: parseInt(studentId), message: message })
+                });
+                var data = await response.json();
+                if (response.ok) {
+                    showSendMsg('SMS sent to ' + (data.contact || 'guardian') + ' for ' + studentName, 'success');
+                    loadLogs();
+                } else {
+                    showSendMsg(data.error || 'Failed to send SMS', 'error');
+                }
+            } catch (err) {
+                showSendMsg('Connection error. Is the server running?', 'error');
+            }
+        }
+
+        function showSendMsg(text, type) {
+            var el = document.getElementById('sendMsg');
+            el.textContent = text;
+            el.className = 'send-msg';
+            el.classList.add(type === 'success' ? 'send-msg-success' : 'send-msg-error');
+            el.style.display = 'block';
+            setTimeout(function() { el.style.display = 'none'; }, 5000);
+        }
+
         async function loadLogs() {
             try {
                 var response = await fetch('/api/sms/logs', {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -327,6 +638,8 @@
             }
         }
 
+        /* Load everything */
+        loadStudentStatus();
         loadLogs();
     </script>
 </body>

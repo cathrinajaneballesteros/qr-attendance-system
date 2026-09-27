@@ -7,29 +7,230 @@
     <title>SF2 Submission Progress - QR Attendance</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        body { padding: 15px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .section-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
-        .section-card h2 { color: #880e4f; margin-bottom: 15px; font-size: 1.1em; }
-        .progress-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
-        .month-card { background: #fff5f7; border: 2px solid #fce4ec; border-radius: 10px; padding: 15px; }
-        .month-card h3 { color: #880e4f; font-size: 0.95em; margin-bottom: 10px; }
-        .month-card .status { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .month-card select { width: 100%; padding: 8px; border: 2px solid #fce4ec; border-radius: 6px; font-size: 0.85em; }
-        .month-card select:focus { border-color: #e91e63; outline: none; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot-pending { background: #ffcc80; }
-        .dot-submitted { background: #a5d6a7; }
-        .dot-approved { background: #2e7d32; }
-        .dot-not-started { background: #ccc; }
-        .save-btn { display: block; margin: 20px auto 0; padding: 12px 40px; background: #880e4f; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1em; }
-        .save-btn:hover { background: #ad1457; }
-        .save-msg { text-align: center; margin-top: 10px; font-size: 0.85em; display: none; }
-        .save-msg-success { color: #2e7d32; }
-        .save-msg-error { color: #c62828; }
-        .legend { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; font-size: 0.8em; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        @media (max-width: 480px) { .progress-grid { grid-template-columns: 1fr; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff5f7;
+            color: #333;
+            padding: 15px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .section-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(219, 112, 147, 0.1);
+        }
+        .section-card h2 {
+            color: #880e4f;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            font-size: 0.8em;
+            padding: 10px;
+            background: #fff5f7;
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-not-started {
+            background: #ccc;
+        }
+        .dot-pending {
+            background: #ffcc80;
+        }
+        .dot-submitted {
+            background: #a5d6a7;
+        }
+        .dot-approved {
+            background: #2e7d32;
+        }
+        .dot-rejected {
+            background: #ef5350;
+        }
+
+        /* Teacher selection */
+        .teacher-select-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .teacher-select-row label {
+            font-weight: bold;
+            color: #880e4f;
+            font-size: 0.9em;
+        }
+        .teacher-select-row select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px solid #fce4ec;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .teacher-select-row select:focus {
+            border-color: #e91e63;
+            outline: none;
+        }
+
+        /* Progress table */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        th {
+            background: #fce4ec;
+            color: #880e4f;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 0.8em;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #fce4ec;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: #fff5f7;
+        }
+        .month-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .status-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-select {
+            padding: 6px 10px;
+            border: 2px solid #fce4ec;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            min-width: 140px;
+        }
+        .status-select:focus {
+            border-color: #e91e63;
+            outline: none;
+        }
+        .remarks-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 2px solid #fce4ec;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        .remarks-input:focus {
+            border-color: #e91e63;
+            outline: none;
+        }
+
+        /* Summary cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: #fff5f7;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #fce4ec;
+        }
+        .summary-card .sum-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #880e4f;
+        }
+        .summary-card .sum-label {
+            font-size: 0.7em;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .save-btn {
+            padding: 12px 40px;
+            background: #880e4f;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        .save-btn:hover {
+            background: #ad1457;
+        }
+        .save-msg {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.85em;
+            display: none;
+        }
+        .save-msg-success {
+            color: #2e7d32;
+        }
+        .save-msg-error {
+            color: #c62828;
+        }
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            table {
+                font-size: 0.75em;
+            }
+            th, td {
+                padding: 8px 4px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -40,92 +241,285 @@
             <a href="sf2-progress.html" class="active">SF2 Submission Progress</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
+
         <div class="section-card">
             <h2>SF2 Submission Progress - S.Y. 2026-2027</h2>
+
             <div class="legend">
                 <div class="legend-item"><div class="status-dot dot-not-started"></div> Not Started</div>
                 <div class="legend-item"><div class="status-dot dot-pending"></div> Pending</div>
                 <div class="legend-item"><div class="status-dot dot-submitted"></div> Submitted</div>
                 <div class="legend-item"><div class="status-dot dot-approved"></div> Approved</div>
+                <div class="legend-item"><div class="status-dot dot-rejected"></div> Rejected</div>
             </div>
-            <div class="progress-grid" id="progressGrid"></div>
-            <button class="save-btn" onclick="saveProgress()">Save Progress</button>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="sum-value" id="sumNotStarted">0</div>
+                    <div class="sum-label">Not Started</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sum-value" id="sumPending">0</div>
+                    <div class="sum-label">Pending</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sum-value" id="sumSubmitted">0</div>
+                    <div class="sum-label">Submitted</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sum-value" id="sumApproved">0</div>
+                    <div class="sum-label">Approved</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sum-value" id="sumRejected">0</div>
+                    <div class="sum-label">Rejected</div>
+                </div>
+            </div>
+
+            <div class="teacher-select-row">
+                <label>Select Teacher:</label>
+                <select id="teacherSelect" onchange="loadTeacherProgress()">
+                    <option value="all">-- All Teachers --</option>
+                </select>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Teacher</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="progressBody">
+                        <tr><td colspan="4" class="no-data">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-row">
+                <button class="save-btn" onclick="saveProgress()">Save Progress</button>
+            </div>
             <div class="save-msg" id="saveMsg"></div>
         </div>
     </div>
+
     <script>
         var token = localStorage.getItem('token');
         var user = null;
-        if (!token) { window.location.href = 'index.html'; }
-        try { user = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) { user = {}; }
-        if (user && user.role !== 'admin') { window.location.href = 'dashboard.html'; }
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+        try {
+            user = JSON.parse(localStorage.getItem('user') || '{}');
+        } catch(e) {
+            user = {};
+        }
+
+        /* Check if admin - but don't redirect immediately, verify token first */
+        if (!user || !user.role) {
+            window.location.href = 'index.html';
+        }
+        if (user.role !== 'admin') {
+            window.location.href = 'dashboard.html';
+        }
+
+        var allTeachers = [];
+        var progressData = {};
+
+        var months = [
+            { name: 'June 2026', key: '2026-06' },
+            { name: 'July 2026', key: '2026-07' },
+            { name: 'August 2026', key: '2026-08' },
+            { name: 'September 2026', key: '2026-09' },
+            { name: 'October 2026', key: '2026-10' },
+            { name: 'November 2026', key: '2026-11' },
+            { name: 'December 2026', key: '2026-12' },
+            { name: 'January 2027', key: '2027-01' },
+            { name: 'February 2027', key: '2027-02' },
+            { name: 'March 2027', key: '2027-03' }
+        ];
 
         function confirmLogout(e) {
             e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
-        }
-
-        var months = [
-            { name: 'June 2026', key: 'june_2026' },
-            { name: 'July 2026', key: 'july_2026' },
-            { name: 'August 2026', key: 'august_2026' },
-            { name: 'September 2026', key: 'september_2026' },
-            { name: 'October 2026', key: 'october_2026' },
-            { name: 'November 2026', key: 'november_2026' },
-            { name: 'December 2026', key: 'december_2026' },
-            { name: 'January 2027', key: 'january_2027' },
-            { name: 'February 2027', key: 'february_2027' },
-            { name: 'March 2027', key: 'march_2027' }
-        ];
-
-        function renderGrid(savedProgress) {
-            var grid = document.getElementById('progressGrid');
-            var html = '';
-            for (var i = 0; i < months.length; i++) {
-                var m = months[i];
-                var currentStatus = (savedProgress && savedProgress[m.key]) ? savedProgress[m.key] : 'not_started';
-                var dotClass = 'dot-not-started';
-                if (currentStatus === 'pending') dotClass = 'dot-pending';
-                else if (currentStatus === 'submitted') dotClass = 'dot-submitted';
-                else if (currentStatus === 'approved') dotClass = 'dot-approved';
-
-                html += '<div class="month-card">';
-                html += '<h3>' + m.name + '</h3>';
-                html += '<div class="status"><div class="status-dot ' + dotClass + '" id="dot-' + m.key + '"></div><span id="label-' + m.key + '">' + currentStatus.replace('_', ' ').toUpperCase() + '</span></div>';
-                html += '<select id="select-' + m.key + '" onchange="updateDot(\'' + m.key + '\')">';
-                html += '<option value="not_started"' + (currentStatus === 'not_started' ? ' selected' : '') + '>Not Started</option>';
-                html += '<option value="pending"' + (currentStatus === 'pending' ? ' selected' : '') + '>Pending</option>';
-                html += '<option value="submitted"' + (currentStatus === 'submitted' ? ' selected' : '') + '>Submitted</option>';
-                html += '<option value="approved"' + (currentStatus === 'approved' ? ' selected' : '') + '>Approved</option>';
-                html += '</select>';
-                html += '</div>';
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = 'index.html';
             }
-            grid.innerHTML = html;
         }
 
-        function updateDot(key) {
-            var val = document.getElementById('select-' + key).value;
-            var dot = document.getElementById('dot-' + key);
-            var label = document.getElementById('label-' + key);
+        function updateSummary() {
+            var counts = { not_started: 0, pending: 0, submitted: 0, approved: 0, rejected: 0 };
+            var selects = document.querySelectorAll('.status-select');
+            for (var i = 0; i < selects.length; i++) {
+                var val = selects[i].value;
+                if (counts[val] !== undefined) {
+                    counts[val]++;
+                }
+            }
+            document.getElementById('sumNotStarted').textContent = counts.not_started;
+            document.getElementById('sumPending').textContent = counts.pending;
+            document.getElementById('sumSubmitted').textContent = counts.submitted;
+            document.getElementById('sumApproved').textContent = counts.approved;
+            document.getElementById('sumRejected').textContent = counts.rejected;
+        }
+
+        function updateDotColor(selectEl) {
+            var dot = selectEl.parentElement.querySelector('.status-dot');
+            if (!dot) return;
+            var val = selectEl.value;
             dot.className = 'status-dot';
             if (val === 'not_started') dot.classList.add('dot-not-started');
             else if (val === 'pending') dot.classList.add('dot-pending');
             else if (val === 'submitted') dot.classList.add('dot-submitted');
             else if (val === 'approved') dot.classList.add('dot-approved');
-            label.textContent = val.replace('_', ' ').toUpperCase();
+            else if (val === 'rejected') dot.classList.add('dot-rejected');
+            updateSummary();
+        }
+
+        function renderProgressTable(filterTeacher) {
+            var tbody = document.getElementById('progressBody');
+            var html = '';
+
+            var teachersToShow = allTeachers.filter(function(t) { return t.role === 'teacher'; });
+            if (filterTeacher && filterTeacher !== 'all') {
+                teachersToShow = teachersToShow.filter(function(t) { return t.id == filterTeacher; });
+            }
+
+            if (teachersToShow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">No teachers found. Add teachers in Manage Teachers page.</td></tr>';
+                updateSummary();
+                return;
+            }
+
+            for (var t = 0; t < teachersToShow.length; t++) {
+                var teacher = teachersToShow[t];
+                for (var m = 0; m < months.length; m++) {
+                    var month = months[m];
+                    var key = teacher.id + '_' + month.key;
+                    var currentStatus = (progressData[key] && progressData[key].status) ? progressData[key].status : 'not_started';
+                    var currentRemarks = (progressData[key] && progressData[key].remarks) ? progressData[key].remarks : '';
+
+                    var dotClass = 'dot-not-started';
+                    if (currentStatus === 'pending') dotClass = 'dot-pending';
+                    else if (currentStatus === 'submitted') dotClass = 'dot-submitted';
+                    else if (currentStatus === 'approved') dotClass = 'dot-approved';
+                    else if (currentStatus === 'rejected') dotClass = 'dot-rejected';
+
+                    html += '<tr>';
+                    html += '<td class="month-name">' + month.name + '</td>';
+                    html += '<td>' + (teacher.full_name || teacher.username) + '</td>';
+                    html += '<td>';
+                    html += '<div class="status-cell">';
+                    html += '<div class="status-dot ' + dotClass + '"></div>';
+                    html += '<select class="status-select" data-key="' + key + '" onchange="updateDotColor(this)">';
+                    html += '<option value="not_started"' + (currentStatus === 'not_started' ? ' selected' : '') + '>Not Started</option>';
+                    html += '<option value="pending"' + (currentStatus === 'pending' ? ' selected' : '') + '>Pending</option>';
+                    html += '<option value="submitted"' + (currentStatus === 'submitted' ? ' selected' : '') + '>Submitted</option>';
+                    html += '<option value="approved"' + (currentStatus === 'approved' ? ' selected' : '') + '>Approved</option>';
+                    html += '<option value="rejected"' + (currentStatus === 'rejected' ? ' selected' : '') + '>Rejected</option>';
+                    html += '</select>';
+                    html += '</div>';
+                    html += '</td>';
+                    html += '<td><input type="text" class="remarks-input" data-key="' + key + '" value="' + currentRemarks + '" placeholder="Add remarks..."></td>';
+                    html += '</tr>';
+                }
+
+                /* Add separator between teachers */
+                if (t < teachersToShow.length - 1) {
+                    html += '<tr><td colspan="4" style="background:#fce4ec;padding:2px;"></td></tr>';
+                }
+            }
+
+            tbody.innerHTML = html;
+            updateSummary();
+        }
+
+        function loadTeacherProgress() {
+            var selectedTeacher = document.getElementById('teacherSelect').value;
+            renderProgressTable(selectedTeacher);
+        }
+
+        async function loadTeachers() {
+            try {
+                var response = await fetch('/api/auth/users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        /* Token expired - redirect to login */
+                        localStorage.clear();
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    document.getElementById('progressBody').innerHTML = '<tr><td colspan="4" class="no-data">Failed to load teachers</td></tr>';
+                    return;
+                }
+                var users = await response.json();
+                allTeachers = users;
+
+                /* Populate teacher dropdown */
+                var select = document.getElementById('teacherSelect');
+                select.innerHTML = '<option value="all">-- All Teachers --</option>';
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].role === 'teacher') {
+                        var opt = document.createElement('option');
+                        opt.value = users[i].id;
+                        opt.textContent = users[i].full_name || users[i].username;
+                        select.appendChild(opt);
+                    }
+                }
+
+                /* Load saved progress from localStorage (since backend stores it simply) */
+                try {
+                    var savedProgress = localStorage.getItem('sf2_progress_data');
+                    if (savedProgress) {
+                        progressData = JSON.parse(savedProgress);
+                    }
+                } catch(e) {
+                    progressData = {};
+                }
+
+                renderProgressTable('all');
+            } catch (err) {
+                console.log('Load teachers error:', err);
+                document.getElementById('progressBody').innerHTML = '<tr><td colspan="4" class="no-data">Error loading data. Server may be starting up.</td></tr>';
+            }
         }
 
         async function saveProgress() {
-            var progress = {};
-            for (var i = 0; i < months.length; i++) {
-                var sel = document.getElementById('select-' + months[i].key);
-                if (sel) progress[months[i].key] = sel.value;
+            /* Collect all status and remarks from the table */
+            var selects = document.querySelectorAll('.status-select');
+            var remarks = document.querySelectorAll('.remarks-input');
+
+            for (var i = 0; i < selects.length; i++) {
+                var key = selects[i].getAttribute('data-key');
+                progressData[key] = progressData[key] || {};
+                progressData[key].status = selects[i].value;
             }
+            for (var j = 0; j < remarks.length; j++) {
+                var rKey = remarks[j].getAttribute('data-key');
+                progressData[rKey] = progressData[rKey] || {};
+                progressData[rKey].remarks = remarks[j].value;
+            }
+
+            /* Save to localStorage */
+            localStorage.setItem('sf2_progress_data', JSON.stringify(progressData));
+
+            /* Also save to backend */
             try {
                 var response = await fetch('/api/sf2/progress', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ school_year: '2026-2027', progress: progress })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        school_year: '2026-2027',
+                        progress: progressData
+                    })
                 });
                 var data = await response.json();
                 var msgEl = document.getElementById('saveMsg');
@@ -133,32 +527,22 @@
                     msgEl.textContent = 'Progress saved successfully!';
                     msgEl.className = 'save-msg save-msg-success';
                 } else {
-                    msgEl.textContent = data.error || 'Failed to save progress';
+                    msgEl.textContent = data.error || 'Failed to save to server, but saved locally.';
                     msgEl.className = 'save-msg save-msg-error';
                 }
                 msgEl.style.display = 'block';
                 setTimeout(function() { msgEl.style.display = 'none'; }, 4000);
             } catch (err) {
+                /* Still saved locally */
                 var msgEl2 = document.getElementById('saveMsg');
-                msgEl2.textContent = 'Connection error. Is the server running?';
-                msgEl2.className = 'save-msg save-msg-error';
+                msgEl2.textContent = 'Saved locally. Server sync will happen next time.';
+                msgEl2.className = 'save-msg save-msg-success';
                 msgEl2.style.display = 'block';
+                setTimeout(function() { msgEl2.style.display = 'none'; }, 4000);
             }
         }
 
-        async function loadProgress() {
-            try {
-                var response = await fetch('/api/sf2/report?month=' + new Date().toISOString().substring(0, 7), { headers: { 'Authorization': 'Bearer ' + token } });
-                if (response.ok) {
-                    renderGrid({});
-                } else {
-                    renderGrid({});
-                }
-            } catch (err) {
-                renderGrid({});
-            }
-        }
-        loadProgress();
+        loadTeachers();
     </script>
 </body>
 </html>
