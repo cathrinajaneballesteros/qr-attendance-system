@@ -12,6 +12,7 @@
     .summary-card{flex:1;min-width:220px;background:#fff5f8;padding:18px;border-radius:12px}
     .summary-card strong{display:block;margin-top:8px;font-size:1.2em;color:#880e4f}
     button{padding:11px 18px;border:0;border-radius:8px;cursor:pointer}
+    button:disabled{opacity:.6;cursor:wait}
     label{display:block;margin:12px 0 5px}
     input{display:block;width:100%;max-width:420px;padding:10px;box-sizing:border-box}
     .message{margin-top:12px;padding:10px;border-radius:8px}
@@ -28,7 +29,9 @@
 <body>
   <main>
     <h1>My Attendance</h1>
-    <p class="muted">Welcome, <strong id="studentName">Loading…</strong></p>
+    <p class="muted">Welcome, <strong id="studentName">Loading profile…</strong></p>
+
+    <div id="portalNotice" class="message error" role="alert" hidden></div>
 
     <section class="summary">
       <div class="summary-card">
@@ -43,10 +46,10 @@
 
     <section class="panel">
       <h2>Record today's attendance</h2>
-      <p class="muted">
-        If GPS check-in is enabled for onsite attendance, allow location access when your browser asks.
-      </p>
-      <button type="button" onclick="checkIn()">I am present — record attendance</button>
+      <p class="muted">If GPS check-in is enabled, allow location access when your browser asks.</p>
+      <button id="checkInButton" type="button" onclick="checkIn()">
+        I am present — record attendance
+      </button>
       <div id="attendanceMessage" class="message" role="status" aria-live="polite" hidden></div>
     </section>
 
@@ -55,11 +58,7 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>Date</th><th>Time</th><th>Status</th></tr>
           </thead>
           <tbody id="historyRows">
             <tr><td colspan="3">Loading attendance history…</td></tr>
@@ -70,8 +69,7 @@
 
     <section class="panel">
       <h2>Change password</h2>
-      <p class="muted">Your password is private and will not be displayed on this page.</p>
-
+      <p class="muted">Your password is private and is never displayed on this page.</p>
       <form id="passwordForm" onsubmit="changePassword(event)">
         <label for="currentPassword">Current password</label>
         <input id="currentPassword" type="password" autocomplete="current-password" required>
@@ -115,6 +113,13 @@
       'Content-Type': 'application/json'
     };
 
+    function showMessage(elementId, message, isError) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.hidden = false;
+      element.className = 'message ' + (isError ? 'error' : 'success');
+    }
+
     function manilaDateKey() {
       const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Manila',
@@ -126,13 +131,6 @@
       const values = {};
       parts.forEach(part => values[part.type] = part.value);
       return values.year + '-' + values.month + '-' + values.day;
-    }
-
-    function showMessage(elementId, message, isError) {
-      const element = document.getElementById(elementId);
-      element.textContent = message;
-      element.hidden = false;
-      element.className = 'message ' + (isError ? 'error' : 'success');
     }
 
     function updateTodayStatus() {
@@ -173,16 +171,26 @@
     }
 
     async function loadPortal() {
+      const notice = document.getElementById('portalNotice');
+
       try {
         const response = await fetch('/api/student-account/me', { headers });
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          logout();
+          document.getElementById('studentName').textContent = 'Profile could not be loaded';
+          document.getElementById('todayStatus').textContent = 'Unavailable';
+          document.getElementById('historyRows').innerHTML =
+            '<tr><td colspan="3">Attendance history could not be loaded.</td></tr>';
+
+          notice.textContent =
+            'Student portal error (' + response.status + '): ' +
+            (data.error || 'The server could not load this student account.');
+          notice.hidden = false;
           return;
         }
 
-        const data = await response.json();
-
+        notice.hidden = true;
         document.getElementById('studentName').textContent =
           data.student && data.student.full_name
             ? data.student.full_name
@@ -192,26 +200,25 @@
         renderHistory();
         updateTodayStatus();
       } catch (error) {
-        document.getElementById('studentName').textContent = 'Could not load account';
-        document.getElementById('historyRows').innerHTML =
-          '<tr><td colspan="3">Could not load attendance history. Refresh the page to try again.</td></tr>';
+        document.getElementById('studentName').textContent = 'Profile could not be loaded';
+        notice.textContent = 'Could not connect to the student account service. Refresh and try again.';
+        notice.hidden = false;
       }
     }
 
     async function checkIn() {
-      const button = document.querySelector('button[onclick="checkIn()"]');
+      const button = document.getElementById('checkInButton');
       button.disabled = true;
       button.textContent = 'Recording…';
 
       try {
         const settingsResponse = await fetch('/api/settings', { headers });
+        const settings = await settingsResponse.json().catch(() => ({}));
 
         if (!settingsResponse.ok) {
-          showMessage('attendanceMessage', 'Could not load attendance settings.', true);
+          showMessage('attendanceMessage', settings.error || 'Could not load attendance settings.', true);
           return;
         }
-
-        const settings = await settingsResponse.json();
 
         const submitAttendance = async coordinates => {
           const response = await fetch('/api/attendance/self', {
@@ -220,7 +227,7 @@
             body: JSON.stringify(coordinates || {})
           });
 
-          const result = await response.json();
+          const result = await response.json().catch(() => ({}));
 
           if (!response.ok) {
             showMessage('attendanceMessage', result.error || 'Attendance could not be recorded.', true);
@@ -283,7 +290,7 @@
           })
         });
 
-        const result = await response.json();
+        const result = await response.json().catch(() => ({}));
 
         if (!response.ok) {
           showMessage('passwordMessage', result.error || 'Could not change password.', true);
