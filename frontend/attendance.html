@@ -43,6 +43,7 @@
             <a href="students.html">Students</a>
             <a href="sf2-report.html">SF2 Report</a>
             <a href="sms-logs.html">SMS Logs</a>
+            <a href="settings.html">Attendance Settings</a><a href="records.html">Download Records</a>
             <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
         </div>
         <div class="clock-section">
@@ -126,12 +127,12 @@
             if (e.key === 'Enter') manualScan();
         });
 
-        async function processQR(qrCode) {
+        async function processQR(qrCode) { var scanData={qr_code:qrCode}; try { var cfgResponse=await fetch("/api/settings",{headers:{"Authorization":"Bearer "+token}}); var cfg=await cfgResponse.json(); if(cfg.gps_enabled==="1"){var pos=await new Promise(function(resolve,reject){navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000});});scanData.latitude=pos.coords.latitude;scanData.longitude=pos.coords.longitude;} } catch(locationError) { showResult("Enable location access for attendance scanning.","error"); return; }
             try {
                 var response = await fetch('/api/attendance/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ qr_code: qrCode })
+                    body: JSON.stringify(scanData)
                 });
                 var data = await response.json();
                 if (response.ok) {
@@ -172,7 +173,7 @@
                 }
                 var html = '';
                 for (var i = 0; i < records.length; i++) {
-                    html += '<tr><td>' + (i + 1) + '</td><td>' + records[i].full_name + '</td><td>' + records[i].sex + '</td><td>' + records[i].time_in + '</td><td>Present</td></tr>';
+                    html += '<tr><td>' + (i + 1) + '</td><td>' + records[i].full_name + '</td><td>' + records[i].sex + '</td><td>' + records[i].time_in + '</td><td>' + records[i].status + '</td></tr>';
                 }
                 tbody.innerHTML = html;
             } catch (err) { console.log('Load records error:', err); }

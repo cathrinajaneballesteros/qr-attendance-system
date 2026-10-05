@@ -1,34 +1,6 @@
+const express=require('express'); const router=express.Router(); const auth=require('../middleware/auth'); const {send}=require('../services/notifications');
+function staff(req,res,next){if(!['admin','teacher'].includes(req.user.role))return res.status(403).json({error:'Teacher or admin account required'});next();}
 
-const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/auth');
-
-router.post('/send', auth, function(req, res) {
-    try {
-        var db = req.app.get('db');
-        var studentId = req.body.student_id;
-        var message = req.body.message || '';
-        var student = db.prepare('SELECT * FROM students WHERE id = ?').get(studentId);
-        if (!student) return res.status(404).json({ error: 'Student not found' });
-        var contact = student.guardian_contact || 'N/A';
-        db.prepare('INSERT INTO sms_logs (student_id, guardian_contact, message, status) VALUES (?, ?, ?, ?)').run(studentId, contact, message, contact === 'N/A' ? 'no_contact' : 'sent');
-        console.log('SMS to', contact, ':', message);
-        res.json({ message: 'SMS logged', contact: contact });
-    } catch (error) {
-        console.log('SMS error:', error.message);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-router.get('/logs', auth, function(req, res) {
-    try {
-        var db = req.app.get('db');
-        var logs = db.prepare('SELECT l.*, s.full_name FROM sms_logs l JOIN students s ON l.student_id = s.id ORDER BY l.created_at DESC').all();
-        res.json(logs);
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-module.exports = router;
-
+router.post('/send',auth,staff,async(req,res)=>{try{const db=req.app.get('db'),id=req.body.student_id,message=String(req.body.message||'').trim();const student=db.prepare('SELECT * FROM students WHERE id=?').get(id);if(!student)return res.status(404).json({error:'Student not found'});if(!message)return res.status(400).json({error:'Message is required'});const phone=student.student_phone||student.guardian_contact||'';if(!phone)return res.status(400).json({error:'No student or guardian mobile number is recorded'});const result=await send(phone,message);const status=result.status==='queued'?'sent':result.status;db.prepare('INSERT INTO sms_logs (student_id,guardian_contact,message,status) VALUES (?,?,?,?)').run(id,phone,message,status);if(status!=='sent')return res.status(502).json({error:'SMS provider did not accept the message',status});res.json({message:'SMS accepted by provider',contact:phone});}catch(e){console.error('SMS error:',e.message);res.status(500).json({error:'SMS could not be sent'});}});
+router.get('/logs',auth,staff,(req,res)=>{try{res.json(req.app.get('db').prepare('SELECT l.*,s.full_name FROM sms_logs l JOIN students s ON s.id=l.student_id ORDER BY l.created_at DESC').all());}catch(e){res.status(500).json({error:'Server error'});}});
+module.exports=router;

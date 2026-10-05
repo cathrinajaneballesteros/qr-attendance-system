@@ -1,6 +1,6 @@
 
 const jwt = require('jsonwebtoken');
-var JWT_SECRET = 'qr-attendance-secret-key-2026';
+var JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-before-deployment';
 
 function auth(req, res, next) {
     try {

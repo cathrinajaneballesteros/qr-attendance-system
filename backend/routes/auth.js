@@ -4,12 +4,12 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
-var JWT_SECRET = 'qr-attendance-secret-key-2026';
+var JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-before-deployment';
 
 router.post('/login', function(req, res) {
     try {
         var db = req.app.get('db');
-        var username = (req.body.username || '').trim();
+        var username = (req.body.username || req.body.email || '').trim();
         var password = req.body.password || '';
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
@@ -23,11 +23,11 @@ router.post('/login', function(req, res) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
         var token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role, full_name: user.full_name },
+            { id: user.id, username: user.username, role: user.role, full_name: user.full_name, student_id: user.student_id || null },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
-        res.json({ token: token, user: { id: user.id, username: user.username, role: user.role, full_name: user.full_name } });
+        res.json({ token: token, user: { id: user.id, username: user.username, role: user.role, full_name: user.full_name, student_id: user.student_id || null } });
     } catch (error) {
         console.log('Login error:', error.message);
         res.status(500).json({ error: 'Server error during login' });
@@ -41,7 +41,7 @@ router.post('/register', auth, function(req, res) {
         }
         var db = req.app.get('db');
         var fullName = (req.body.full_name || '').trim();
-        var username = (req.body.username || '').trim();
+        var username = (req.body.username || req.body.email || '').trim();
         var password = req.body.password || '';
         var role = req.body.role || 'teacher';
         if (!fullName || !username || !password) {
