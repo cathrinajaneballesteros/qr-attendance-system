@@ -1,5 +1,174 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Attendance</title><link rel="stylesheet" href="css/style.css"><style>main{max-width:820px;margin:32px auto;padding:20px}.panel{background:#fff;padding:22px;margin:16px 0;border-radius:12px;box-shadow:0 2px 10px #0001}button{padding:12px 20px}.msg{margin-left:10px}</style></head><body><main><h1>Student Attendance</h1><section class="panel"><h2 id="name">Loading…</h2><p>Use the button below to record your attendance. Allow location access when asked for onsite check-in.</p><button onclick="checkIn()">Record my attendance</button><span id="msg" class="msg"></span></section><section class="panel"><h2>Recent attendance</h2><table><thead><tr><th>Date</th><th>Time</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></section><button onclick="logout()">Sign out</button></main><script>
-const token=localStorage.getItem('token');if(!token)location.href='index.html';const headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'};
-async function load(){const r=await fetch('/api/student-account/me',{headers});if(!r.ok){logout();return}const d=await r.json();document.getElementById('name').textContent=d.student.full_name;document.getElementById('rows').innerHTML=d.records.map(x=>`<tr><td>${x.date}</td><td>${x.time_in||''}</td><td>${x.status}</td></tr>`).join('')||'<tr><td colspan="3">No records yet</td></tr>'}
-async function checkIn(){const msg=document.getElementById('msg');msg.textContent='Getting location…';const cfg=await fetch('/api/settings',{headers}).then(r=>r.json());const send=async coords=>{const r=await fetch('/api/attendance/self',{method:'POST',headers,body:JSON.stringify(coords||{})});const d=await r.json();msg.textContent=r.ok?(d.duplicate?'Already recorded today at '+d.time_in:'Attendance recorded at '+d.time_in+' ('+d.status+')'):(d.error||'Could not record attendance');if(r.ok)load()};if(cfg.gps_enabled==='1'){if(!navigator.geolocation){msg.textContent='This browser does not support location access.';return}navigator.geolocation.getCurrentPosition(p=>send({latitude:p.coords.latitude,longitude:p.coords.longitude}),()=>{msg.textContent='Location permission is required for onsite check-in.'},{enableHighAccuracy:true,timeout:15000})}else send({})}
-function logout(){localStorage.clear();location.href='index.html'}load();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Attendance</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    main{max-width:820px;margin:32px auto;padding:20px}
+    .panel{background:#fff;padding:22px;margin:16px 0;border-radius:12px;box-shadow:0 2px 10px #0001}
+    button{padding:12px 20px}
+    .msg{margin-left:10px}
+    label{display:block;margin:12px 0 5px}
+    input{display:block;width:100%;max-width:420px;padding:10px;box-sizing:border-box}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Student Attendance</h1>
+
+    <section class="panel">
+      <h2 id="name">Loading…</h2>
+      <p>Use the button below to record your attendance. Allow location access when asked for onsite check-in.</p>
+      <button onclick="checkIn()">Record my attendance</button>
+      <span id="msg" class="msg"></span>
+    </section>
+
+    <section class="panel">
+      <h2>Recent attendance</h2>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Time</th><th>Status</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Change password</h2>
+      <p>Enter your current password, then choose a new password with at least 8 characters.</p>
+
+      <form onsubmit="changePassword(event)">
+        <label for="currentPassword">Current password</label>
+        <input id="currentPassword" type="password" autocomplete="current-password" required>
+
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
+
+        <label for="confirmPassword">Confirm new password</label>
+        <input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required>
+
+        <button type="submit">Change password</button>
+        <span id="passwordMsg" class="msg" role="status"></span>
+      </form>
+    </section>
+
+    <button onclick="logout()">Sign out</button>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      location.href = 'index.html';
+    }
+
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    };
+
+    async function load() {
+      const response = await fetch('/api/student-account/me', { headers });
+
+      if (!response.ok) {
+        logout();
+        return;
+      }
+
+      const data = await response.json();
+      document.getElementById('name').textContent = data.student.full_name;
+
+      document.getElementById('rows').innerHTML =
+        data.records.map(record =>
+          `<tr><td>${record.date}</td><td>${record.time_in || ''}</td><td>${record.status}</td></tr>`
+        ).join('') || '<tr><td colspan="3">No records yet</td></tr>';
+    }
+
+    async function checkIn() {
+      const message = document.getElementById('msg');
+      message.textContent = 'Getting location…';
+
+      const settingsResponse = await fetch('/api/settings', { headers });
+      const settings = await settingsResponse.json();
+
+      const sendAttendance = async coordinates => {
+        const response = await fetch('/api/attendance/self', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(coordinates || {})
+        });
+
+        const data = await response.json();
+
+        message.textContent = response.ok
+          ? (data.duplicate
+              ? 'Already recorded today at ' + data.time_in
+              : 'Attendance recorded at ' + data.time_in + ' (' + data.status + ')')
+          : (data.error || 'Could not record attendance');
+
+        if (response.ok) load();
+      };
+
+      if (settings.gps_enabled === '1') {
+        if (!navigator.geolocation) {
+          message.textContent = 'This browser does not support location access.';
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          position => sendAttendance({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          }),
+          () => {
+            message.textContent = 'Location permission is required for onsite check-in.';
+          },
+          { enableHighAccuracy: true, timeout: 15000 }
+        );
+      } else {
+        sendAttendance({});
+      }
+    }
+
+    async function changePassword(event) {
+      event.preventDefault();
+
+      const message = document.getElementById('passwordMsg');
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      message.textContent = 'Updating password…';
+
+      try {
+        const response = await fetch('/api/student-account/change-password', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          message.textContent = data.error || 'Could not change password.';
+          return;
+        }
+
+        document.querySelector('form').reset();
+        message.textContent = 'Password changed successfully.';
+      } catch (error) {
+        message.textContent = 'Could not connect to the server.';
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      location.href = 'index.html';
+    }
+
+    load();
+  </script>
+</body>
+</html>
