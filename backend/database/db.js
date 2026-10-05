@@ -8,10 +8,10 @@ const dbPath = path.join(__dirname, '..', 'attendance.db');
 
 function saveDB() {
   if (!db) return;
-
-  const data = db.export();
-  fs.writeFileSync(dbPath, Buffer.from(data));
+  fs.writeFileSync(dbPath, Buffer.from(db.export()));
 }
+
+setInterval(saveDB, 30000);
 
 function ensureColumn(table, column, definition) {
   const result = db.exec('PRAGMA table_info(' + table + ')');
@@ -25,8 +25,7 @@ function ensureColumn(table, column, definition) {
   }
 }
 
-function migrateDatabase() {
-  // Create tables used by the current app. Existing tables and rows are kept.
+function createTablesAndMigrate() {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,7 +110,7 @@ function migrateDatabase() {
     )
   `);
 
-  // CREATE TABLE IF NOT EXISTS does not add columns to older tables.
+  // Add these to older tables without deleting existing rows.
   ensureColumn('users', 'email', 'TEXT');
   ensureColumn('users', 'student_id', 'INTEGER');
   ensureColumn('students', 'student_phone', 'TEXT');
@@ -119,7 +118,7 @@ function migrateDatabase() {
   ensureColumn('attendance', 'latitude', 'REAL');
   ensureColumn('attendance', 'longitude', 'REAL');
 
-  const defaultSettings = {
+  const defaults = {
     gps_enabled: '0',
     attendance_mode: 'onsite',
     school_latitude: '',
@@ -135,7 +134,7 @@ function migrateDatabase() {
     sms_enabled: '0'
   };
 
-  for (const [key, value] of Object.entries(defaultSettings)) {
+  for (const [key, value] of Object.entries(defaults)) {
     db.run(
       'INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES (?, ?)',
       [key, value]
@@ -143,45 +142,96 @@ function migrateDatabase() {
   }
 }
 
+function addOriginalSampleStudentsIfEmpty() {
+  const result = db.exec('SELECT COUNT(*) FROM students');
+  const count = result[0].values[0][0];
+
+  if (count > 0) return;
+
+  const males = [
+    'ANIN, ANGELITO LAPITAN',
+    'CALLENA, KHALED GAYAP',
+    'DOTIMAS, IVAN VILLAMOR',
+    'DOTIMAS, JHON PADILLA',
+    'GAYAP, JUSTINE BLACE',
+    'HERANI, ANTHONY JR QUINTERO',
+    'LAPITAN, GIDEON NATIVIDAD',
+    'LAPITAN, YAEL NATIVIDAD',
+    'LUMONTAD, CHRISTIAN MANIBOY',
+    'PACHOCA, JOHN ROBERT DELA CRUZ',
+    'PULANCO, JERALD GULOY',
+    'SORIANO, MARK ANGELO GAYAP'
+  ];
+
+  const females = [
+    'AGOTO, MILAGROS RINGOR',
+    'ANCHETA, KRISTINE HALOG',
+    'CARIAGA, ANGEL BESTROLLO',
+    'DELOS TRINOS, JANNAH ROSE ROBRIGADO',
+    'ESTRADA, RHIAN VIERNES',
+    'GAYAP, DARLYN FAITH CANAS',
+    'GAYAP, JOHANNA BLACE',
+    'LAUREANO, PRINCESS GAYAP',
+    'LINDE, ERICA MAY GARBON',
+    'NATIVIDAD, ALEXIES UDARBE',
+    'SINGH, NAMI SHANAIAH OBEDOZA',
+    'VILLANUEVA, KIESHA FAITH PULANCO',
+    'VILORIA, JHAIREEN ANTHONET DELA CRUZ'
+  ];
+
+  males.forEach((name, index) => {
+    const qr = 'QR-' + name.replace(/[^A-Z]/g, '').substring(0, 12) + '-M' + (index + 1);
+    db.run(
+      'INSERT INTO students (full_name, sex, qr_code) VALUES (?, ?, ?)',
+      [name, 'M', qr]
+    );
+  });
+
+  females.forEach((name, index) => {
+    const qr = 'QR-' + name.replace(/[^A-Z]/g, '').substring(0, 12) + '-F' + (index + 1);
+    db.run(
+      'INSERT INTO students (full_name, sex, qr_code) VALUES (?, ?, ?)',
+      [name, 'F', qr]
+    );
+  });
+
+  console.log('Restored the 25 original sample students');
+}
+
+function createDefaultAccountsIfMissing() {
+  const admin = db.exec("SELECT id FROM users WHERE username = 'admin'");
+  if (!admin.length || !admin[0].values.length) {
+    db.run(
+      'INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)',
+      ['Administrator', 'admin', bcrypt.hashSync('admin123', 10), 'admin']
+    );
+    console.log('Default admin account created');
+  }
+
+  const teacher = db.exec("SELECT id FROM users WHERE username = 'teacher'");
+  if (!teacher.length || !teacher[0].values.length) {
+    db.run(
+      'INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)',
+      ['Tifanny Martin Aragon', 'teacher', bcrypt.hashSync('teacher123', 10), 'teacher']
+    );
+    console.log('Default teacher account created');
+  }
+}
+
 async function initDatabase() {
   const SQL = await initSqlJs();
 
   if (fs.existsSync(dbPath)) {
-    const fileBuffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(fileBuffer);
+    db = new SQL.Database(fs.readFileSync(dbPath));
     console.log('Loaded existing database');
   } else {
     db = new SQL.Database();
     console.log('Created new database');
   }
 
-  migrateDatabase();
-
-  const adminCheck = db.exec(
-    "SELECT id FROM users WHERE username = 'admin'"
-  );
-
-  if (!adminCheck.length || !adminCheck[0].values.length) {
-    const hashedAdmin = bcrypt.hashSync('admin123', 10);
-    db.run(
-      'INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)',
-      ['Administrator', 'admin', hashedAdmin, 'admin']
-    );
-    console.log('Default admin account created');
-  }
-
-  const teacherCheck = db.exec(
-    "SELECT id FROM users WHERE username = 'teacher'"
-  );
-
-  if (!teacherCheck.length || !teacherCheck[0].values.length) {
-    const hashedTeacher = bcrypt.hashSync('teacher123', 10);
-    db.run(
-      'INSERT INTO users (full_name, username, password, role) VALUES (?, ?, ?, ?)',
-      ['Tifanny Martin Aragon', 'teacher', hashedTeacher, 'teacher']
-    );
-    console.log('Default teacher account created');
-  }
+  createTablesAndMigrate();
+  createDefaultAccountsIfMissing();
+  addOriginalSampleStudentsIfEmpty();
 
   saveDB();
   console.log('Database initialized and migrations completed');
@@ -214,16 +264,16 @@ function wrapDatabase(sqlDb) {
 
         all(...args) {
           try {
-            const results = [];
+            const rows = [];
             const statement = sqlDb.prepare(sql);
             if (args.length) statement.bind(args);
 
             while (statement.step()) {
-              results.push(statement.getAsObject());
+              rows.push(statement.getAsObject());
             }
 
             statement.free();
-            return results;
+            return rows;
           } catch (error) {
             console.log('DB all error:', error.message);
             return [];
