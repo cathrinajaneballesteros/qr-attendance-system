@@ -1,81 +1,208 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students - QR Attendance</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        body { padding: 15px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .section-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(219,112,147,0.1); }
-        .section-card h2 { color: #880e4f; margin-bottom: 15px; font-size: 1.1em; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
-        th { background: #fce4ec; color: #880e4f; padding: 10px 8px; text-align: left; font-size: 0.8em; }
-        td { padding: 8px; border-bottom: 1px solid #fce4ec; }
-        tr:hover { background: #fff5f7; }
-        .print-btn { padding: 10px 20px; background: #880e4f; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
-        .print-btn:hover { background: #ad1457; }
-        @media (max-width: 480px) { table { font-size: 0.75em; } th, td { padding: 6px 4px; } }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nav-bar">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="attendance.html">Attendance</a>
-            <a href="students.html" class="active">Students</a>
-            <a href="sf2-report.html">SF2 Report</a>
-            <a href="sms-logs.html">SMS Logs</a>
-            <a href="settings.html">Attendance Settings</a><a href="records.html">Download Records</a>
-            <a href="#" class="logout-btn" onclick="confirmLogout(event)">Logout</a>
-        </div>
-        <div class="section-card">
-            <h2>Student List - Grade 6 Great Geniuses (S.Y. 2026-2027)</h2>
-            <button class="print-btn" onclick="window.open('print-qr.html','_blank')">Download QR Code ID Cards</button>
+    <main class="page-container">
+        <section class="section-card">
+            <h1>Students</h1>
+            <p>Add a new student or transferee. A QR code is created automatically.</p>
+        </section>
+
+        <section class="section-card">
+            <h2>Add Student / Transferee</h2>
+
+            <form id="addStudentForm" class="form-grid">
+                <div class="form-field">
+                    <label for="newFullName">Full name *</label>
+                    <input id="newFullName" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="newSex">Sex</label>
+                    <select id="newSex">
+                        <option value="">Select</option>
+                        <option value="F">Female</option>
+                        <option value="M">Male</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="newLrn">LRN</label>
+                    <input id="newLrn">
+                </div>
+
+                <div class="form-field">
+                    <label for="newStudentPhone">Student mobile</label>
+                    <input id="newStudentPhone" type="tel">
+                </div>
+
+                <div class="form-field">
+                    <label for="newGuardianName">Guardian name</label>
+                    <input id="newGuardianName">
+                </div>
+
+                <div class="form-field">
+                    <label for="newGuardianContact">Guardian mobile</label>
+                    <input id="newGuardianContact" type="tel">
+                </div>
+
+                <div class="form-field">
+                    <label for="newEmail">Student email</label>
+                    <input id="newEmail" type="email">
+                </div>
+
+                <div>
+                    <button class="primary-btn" type="submit">Add student</button>
+                    <span id="addStudentMessage" class="form-message"
+                          role="status"></span>
+                </div>
+            </form>
+
+            <p>
+                To create a login for this student, open Attendance Settings
+                after adding them and create their student account.
+            </p>
+        </section>
+
+        <section class="section-card">
+            <h2>Student Records</h2>
+            <button class="print-btn"
+                    onclick="window.open('print-qr.html', '_blank')">
+                Download QR Code ID Cards
+            </button>
+
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>No.</th><th>Full Name</th><th>Sex</th><th>QR Code</th><th>Guardian Contact</th></tr></thead>
-                    <tbody id="studentsBody"><tr><td colspan="5" class="no-data">Loading students...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Full Name</th>
+                            <th>LRN</th>
+                            <th>Sex</th>
+                            <th>QR Code</th>
+                            <th>Student Mobile</th>
+                            <th>Guardian Mobile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsBody">
+                        <tr>
+                            <td colspan="7" class="no-data">Loading students...</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-    <script>
-        var token = localStorage.getItem('token');
-        if (!token) { window.location.href = 'index.html'; }
+        </section>
+    </main>
 
-        function confirmLogout(e) {
-            e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) { localStorage.clear(); window.location.href = 'index.html'; }
+    <script>
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            location.href = 'index.html';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, function (character) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[character];
+            });
         }
 
         async function loadStudents() {
+            const tbody = document.getElementById('studentsBody');
+
             try {
-                var response = await fetch('/api/students', { headers: { 'Authorization': 'Bearer ' + token } });
+                const response = await fetch('/api/students', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                const students = await response.json();
+
                 if (!response.ok) {
-                    document.getElementById('studentsBody').innerHTML = '<tr><td colspan="5" class="no-data">Failed to load students</td></tr>';
-                    return;
+                    throw new Error(students.error || 'Could not load students');
                 }
-                var students = await response.json();
-                var tbody = document.getElementById('studentsBody');
+
                 if (students.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No students found</td></tr>';
+                    tbody.innerHTML =
+                        '<tr><td colspan="7" class="no-data">' +
+                        'No students found</td></tr>';
                     return;
                 }
-                var html = '';
-                for (var i = 0; i < students.length; i++) {
-                    var s = students[i];
-                    html += '<tr><td>' + (i + 1) + '</td><td>' + s.full_name + '</td><td>' + (s.sex || '') + '</td><td>' + (s.qr_code || '') + '</td><td>' + (s.guardian_contact || '') + '</td></tr>';
-                }
-                tbody.innerHTML = html;
-            } catch (err) {
-                document.getElementById('studentsBody').innerHTML = '<tr><td colspan="5" class="no-data">Failed to load students</td></tr>';
+
+                tbody.innerHTML = students.map(function (student, index) {
+                    return '<tr>' +
+                        '<td>' + (index + 1) + '</td>' +
+                        '<td>' + escapeHtml(student.full_name) + '</td>' +
+                        '<td>' + escapeHtml(student.lrn) + '</td>' +
+                        '<td>' + escapeHtml(student.sex) + '</td>' +
+                        '<td>' + escapeHtml(student.qr_code) + '</td>' +
+                        '<td>' + escapeHtml(student.student_phone) + '</td>' +
+                        '<td>' + escapeHtml(student.guardian_contact) + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (error) {
+                tbody.innerHTML =
+                    '<tr><td colspan="7" class="no-data">' +
+                    escapeHtml(error.message) + '</td></tr>';
             }
         }
+
+        document.getElementById('addStudentForm')
+            .addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const message = document.getElementById('addStudentMessage');
+                message.textContent = 'Saving...';
+
+                const student = {
+                    full_name: document.getElementById('newFullName').value.trim(),
+                    sex: document.getElementById('newSex').value,
+                    lrn: document.getElementById('newLrn').value.trim(),
+                    student_phone: document.getElementById('newStudentPhone').value.trim(),
+                    guardian_name: document.getElementById('newGuardianName').value.trim(),
+                    guardian_contact: document.getElementById('newGuardianContact').value.trim(),
+                    email: document.getElementById('newEmail').value.trim()
+                };
+
+                try {
+                    const response = await fetch('/api/students', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify(student)
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Could not add student');
+                    }
+
+                    message.textContent =
+                        'Student added. QR code: ' + result.qr_code;
+
+                    event.target.reset();
+                    await loadStudents();
+                } catch (error) {
+                    message.textContent = error.message;
+                }
+            });
+
         loadStudents();
     </script>
 </body>
 </html>
-
