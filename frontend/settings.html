@@ -1,426 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Settings - QR Attendance</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        body { padding: 15px; }
-        .page-container { max-width: 1000px; margin: 0 auto; }
-        .panel {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(219, 112, 147, 0.1);
-        }
-        .panel h2 { color: #880e4f; margin-bottom: 15px; font-size: 1.1em; }
-        .settings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 14px;
-        }
-        .field label {
-            display: block;
-            margin-bottom: 5px;
-            color: #880e4f;
-            font-weight: 600;
-        }
-        .field input,
-        .field select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e9b6cc;
-            border-radius: 8px;
-            font: inherit;
-        }
-        .help { color: #666; margin-top: 8px; font-size: 0.9em; }
-        .message { margin-left: 10px; color: #880e4f; }
-        .primary-btn {
-            margin-top: 14px;
-            padding: 10px 18px;
-            border: 0;
-            border-radius: 9px;
-            background: #880e4f;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .primary-btn:hover { background: #ad1457; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attendance Settings</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    main{max-width:900px;margin:28px auto;padding:20px}
+    .panel{background:#fff;padding:22px;margin:16px 0;border-radius:12px;box-shadow:0 2px 10px #0001}
+    label{display:block;margin:12px 0 5px}
+    input,select{padding:9px;max-width:100%;width:360px}
+    button{padding:10px 18px;margin-top:14px}
+    .row{display:flex;gap:24px;flex-wrap:wrap}
+    .hint{color:#666;font-size:.9em}
+    .message{margin-left:10px}
+  </style>
 </head>
 <body>
-    <main class="page-container">
-        <section class="panel">
-            <h1>Attendance Settings</h1>
-            <p>Configure onsite attendance, QR validity, late times, and alerts.</p>
-        </section>
+  <main>
+    <h1>Attendance Settings</h1>
+    <p>Set onsite location rules, class times, QR validity, and alert thresholds.</p>
 
-        <section class="panel">
-            <h2>Location and Schedule</h2>
-            <div class="settings-grid">
-                <div class="field">
-                    <label for="gps_enabled">GPS check-in</label>
-                    <select id="gps_enabled">
-                        <option value="0">Off — flipped classroom</option>
-                        <option value="1">On — onsite</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="geofence_radius_m">Allowed radius in meters</label>
-                    <input id="geofence_radius_m" type="number" min="20" max="5000">
-                </div>
-                <div class="field">
-                    <label for="school_latitude">School latitude</label>
-                    <input id="school_latitude" type="number" step="any">
-                </div>
-                <div class="field">
-                    <label for="school_longitude">School longitude</label>
-                    <input id="school_longitude" type="number" step="any">
-                </div>
-                <div class="field">
-                    <label for="late_after">Mark late after</label>
-                    <input id="late_after" type="time">
-                </div>
-                <div class="field">
-                    <label for="attendance_deadline">Absence reminder deadline</label>
-                    <input id="attendance_deadline" type="time">
-                </div>
-                <div class="field">
-                    <label for="absence_threshold">Absence drop-risk threshold</label>
-                    <input id="absence_threshold" type="number" min="1">
-                </div>
-            </div>
-            <p class="help">
-                Set the school coordinates before turning GPS check-in on.
-            </p>
-            <button class="primary-btn" type="button" onclick="useCurrentLocation()">
-                Use my current location as school center
-            </button>
-        </section>
+    <section class="panel">
+      <h2>Location and schedule</h2>
+      <div class="row">
+        <div>
+          <label for="gps_enabled">GPS check-in</label>
+          <select id="gps_enabled">
+            <option value="0">Off (flipped classroom)</option>
+            <option value="1">On (onsite)</option>
+          </select>
+        </div>
+        <div>
+          <label for="geofence_radius_m">Allowed radius (meters)</label>
+          <input id="geofence_radius_m" type="number" min="20" max="5000">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="school_latitude">School latitude</label>
+          <input id="school_latitude" type="number" step="any">
+        </div>
+        <div>
+          <label for="school_longitude">School longitude</label>
+          <input id="school_longitude" type="number" step="any">
+        </div>
+      </div>
+      <p class="hint">Enter the school coordinates and radius. When GPS is on, check-ins outside this area are rejected.</p>
+      <button type="button" onclick="useCurrentLocation()">Use my current location as school center</button>
+      <div class="row">
+        <div>
+          <label for="late_after">Late after</label>
+          <input id="late_after" type="time">
+        </div>
+        <div>
+          <label for="attendance_deadline">Absence reminder deadline</label>
+          <input id="attendance_deadline" type="time">
+        </div>
+        <div>
+          <label for="absence_threshold">Absence threshold for drop-risk alert</label>
+          <input id="absence_threshold" type="number" min="1">
+        </div>
+      </div>
+    </section>
 
-        <section class="panel">
-            <h2>QR Validity</h2>
-            <label>
-                <input id="qr_enabled" type="checkbox">
-                Allow QR attendance
-            </label>
-            <div class="settings-grid">
-                <div class="field">
-                    <label for="qr_start">Valid from</label>
-                    <input id="qr_start" type="datetime-local">
-                </div>
-                <div class="field">
-                    <label for="qr_end">Valid until</label>
-                    <input id="qr_end" type="datetime-local">
-                </div>
-            </div>
-            <p class="help">Leave a date blank for an open-ended QR period.</p>
-        </section>
+    <section class="panel">
+      <h2>QR validity</h2>
+      <label>
+        <input id="qr_enabled" type="checkbox" style="width:auto">
+        Allow QR attendance
+      </label>
+      <div class="row">
+        <div>
+          <label for="qr_start">Valid from</label>
+          <input id="qr_start" type="datetime-local">
+        </div>
+        <div>
+          <label for="qr_end">Valid until</label>
+          <input id="qr_end" type="datetime-local">
+        </div>
+      </div>
+      <p class="hint">Leave either date blank for an open-ended QR period.</p>
+    </section>
 
-        <section class="panel">
-            <h2>Text Notifications</h2>
-            <label>
-                <input id="sms_enabled" type="checkbox">
-                Enable automatic late, absence, and drop-risk SMS
-            </label>
-            <p class="help">
-                Messages go to the student’s mobile number, or to the guardian
-                number if the student’s number is blank.
-            </p>
-        </section>
+    <section class="panel">
+      <h2>Text notifications</h2>
+      <label>
+        <input id="sms_enabled" type="checkbox" style="width:auto">
+        Send automatic late, absence, and drop-risk SMS alerts
+      </label>
+      <p class="hint">Messages go to the student's mobile number, or the guardian number if no student mobile is saved. SMS is sent only when enabled.</p>
+    </section>
 
-        <section class="panel">
-            <button class="primary-btn" type="button" onclick="saveSettings()">
-                Save Attendance Settings
-            </button>
-            <span id="settingsMessage" class="message"></span>
-        </section>
+    <button type="button" onclick="saveSettings()">Save settings</button>
+    <span id="saveMsg" class="message"></span>
 
-        <section class="panel">
-            <h2>Student Contact Numbers</h2>
-            <div class="settings-grid">
-                <div class="field">
-                    <label for="contact_student_id">Student</label>
-                    <select id="contact_student_id" onchange="loadContact()"></select>
-                </div>
-                <div class="field">
-                    <label for="student_phone">Student mobile number</label>
-                    <input id="student_phone" type="tel">
-                </div>
-                <div class="field">
-                    <label for="guardian_contact">Guardian mobile number</label>
-                    <input id="guardian_contact" type="tel">
-                </div>
-            </div>
-            <button class="primary-btn" type="button" onclick="saveContact()">
-                Save Contact Numbers
-            </button>
-            <span id="contactMessage" class="message"></span>
-        </section>
+    <section class="panel">
+      <h2>Student contact details</h2>
+      <label for="contact_student_id">Student</label>
+      <select id="contact_student_id" onchange="loadContact()"></select>
 
-        <section class="panel">
-            <h2>Create Student Account</h2>
-            <p>
-                Ask the student which username and password they want.
-                Enter those credentials here.
-            </p>
+      <label for="student_phone">Student mobile number</label>
+      <input id="student_phone" type="tel">
 
-            <div class="settings-grid">
-                <div class="field">
-                    <label for="account_student_id">Student</label>
-                    <select id="account_student_id"></select>
-                </div>
-                <div class="field">
-                    <label for="student_username">Username chosen by student</label>
-                    <input id="student_username" autocomplete="off">
-                </div>
-                <div class="field">
-                    <label for="student_password">Password chosen by student</label>
-                    <input id="student_password" type="password" minlength="8">
-                </div>
-            </div>
+      <label for="guardian_contact">Guardian mobile number</label>
+      <input id="guardian_contact" type="tel">
 
-            <button class="primary-btn" type="button" onclick="createStudentAccount()">
-                Create Student Account
-            </button>
-            <span id="accountMessage" class="message"></span>
-        </section>
-    </main>
+      <br>
+      <button type="button" onclick="saveContact()">Save contact details</button>
+      <span id="contactMsg" class="message"></span>
+    </section>
 
-    <script>
-        const token = localStorage.getItem('token');
+    <section class="panel">
+      <h2>Create student account</h2>
+      <p class="hint">The teacher creates the initial login. The student can change the password from their portal.</p>
 
-        if (!token) {
-            location.href = 'index.html';
+      <label for="student_id">Student</label>
+      <select id="student_id"></select>
+
+      <label for="username">Username</label>
+      <input id="username" type="text" minlength="3" maxlength="40"
+             autocomplete="off" placeholder="Enter a username">
+
+      <label for="password">Initial password</label>
+      <input id="password" type="password" minlength="8"
+             autocomplete="new-password" placeholder="Enter an initial password">
+
+      <br>
+      <button type="button" onclick="createAccount()">Create account</button>
+      <span id="accountMsg" class="message" role="status"></span>
+    </section>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      location.href = 'index.html';
+    }
+
+    let studentRows = [];
+
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    };
+
+    async function load() {
+      try {
+        const settingsResponse = await fetch('/api/settings', { headers });
+
+        if (!settingsResponse.ok) {
+          throw new Error('Could not load settings');
         }
 
-        let students = [];
+        const settings = await settingsResponse.json();
 
-        function headers() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            };
+        for (const key of [
+          'gps_enabled',
+          'geofence_radius_m',
+          'school_latitude',
+          'school_longitude',
+          'late_after',
+          'attendance_deadline',
+          'absence_threshold',
+          'qr_start',
+          'qr_end'
+        ]) {
+          document.getElementById(key).value = settings[key] || '';
         }
 
-        function showMessage(id, text) {
-            document.getElementById(id).textContent = text;
+        document.getElementById('qr_enabled').checked = settings.qr_enabled !== '0';
+        document.getElementById('sms_enabled').checked = settings.sms_enabled === '1';
+
+        const studentsResponse = await fetch('/api/students', { headers });
+
+        if (!studentsResponse.ok) {
+          throw new Error('Could not load students');
         }
 
-        async function loadPage() {
-            try {
-                const settingsResponse = await fetch('/api/settings', {
-                    headers: headers()
-                });
+        studentRows = await studentsResponse.json();
 
-                if (!settingsResponse.ok) {
-                    throw new Error('Could not load attendance settings.');
-                }
+        const options = studentRows.map(student =>
+          `<option value="${student.id}">${student.full_name} (#${student.id})</option>`
+        ).join('');
 
-                const settings = await settingsResponse.json();
+        document.getElementById('student_id').innerHTML = options;
+        document.getElementById('contact_student_id').innerHTML = options;
 
-                [
-                    'gps_enabled',
-                    'geofence_radius_m',
-                    'school_latitude',
-                    'school_longitude',
-                    'late_after',
-                    'attendance_deadline',
-                    'absence_threshold',
-                    'qr_start',
-                    'qr_end'
-                ].forEach(function (key) {
-                    document.getElementById(key).value = settings[key] || '';
-                });
+        loadContact();
+      } catch (error) {
+        document.getElementById('saveMsg').textContent =
+          'Could not load settings. Sign in with a teacher or admin account.';
+      }
+    }
 
-                document.getElementById('qr_enabled').checked =
-                    settings.qr_enabled !== '0';
-                document.getElementById('sms_enabled').checked =
-                    settings.sms_enabled === '1';
+    function loadContact() {
+      const selectedId = document.getElementById('contact_student_id').value;
+      const student = studentRows.find(item => String(item.id) === selectedId) || {};
 
-                const studentsResponse = await fetch('/api/students', {
-                    headers: headers()
-                });
+      document.getElementById('student_phone').value = student.student_phone || '';
+      document.getElementById('guardian_contact').value = student.guardian_contact || '';
+    }
 
-                if (!studentsResponse.ok) {
-                    throw new Error('Could not load student list.');
-                }
+    async function saveContact() {
+      const selectedId = document.getElementById('contact_student_id').value;
+      const student = studentRows.find(item => String(item.id) === selectedId);
 
-                students = await studentsResponse.json();
+      if (!student) return;
 
-                const options = students.map(function (student) {
-                    return '<option value="' + student.id + '">' +
-                        escapeHtml(student.full_name) +
-                        '</option>';
-                }).join('');
+      const response = await fetch('/api/students/' + student.id, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          full_name: student.full_name,
+          sex: student.sex,
+          guardian_name: student.guardian_name,
+          guardian_contact: document.getElementById('guardian_contact').value,
+          student_phone: document.getElementById('student_phone').value,
+          email: student.email
+        })
+      });
 
-                document.getElementById('contact_student_id').innerHTML = options;
-                document.getElementById('account_student_id').innerHTML = options;
+      document.getElementById('contactMsg').textContent = response.ok
+        ? 'Contact details saved.'
+        : 'Could not save contact details.';
 
-                loadContact();
-            } catch (error) {
-                showMessage('settingsMessage', error.message);
-            }
+      if (response.ok) {
+        student.guardian_contact = document.getElementById('guardian_contact').value;
+        student.student_phone = document.getElementById('student_phone').value;
+      }
+    }
+
+    function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert('Location access is not available.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          document.getElementById('school_latitude').value = position.coords.latitude;
+          document.getElementById('school_longitude').value = position.coords.longitude;
+        },
+        () => alert('Allow location access to set the school center.'),
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
+    }
+
+    async function saveSettings() {
+      const data = {};
+
+      for (const key of [
+        'gps_enabled',
+        'geofence_radius_m',
+        'school_latitude',
+        'school_longitude',
+        'late_after',
+        'attendance_deadline',
+        'absence_threshold',
+        'qr_start',
+        'qr_end'
+      ]) {
+        data[key] = document.getElementById(key).value;
+      }
+
+      data.qr_enabled = document.getElementById('qr_enabled').checked ? '1' : '0';
+      data.sms_enabled = document.getElementById('sms_enabled').checked ? '1' : '0';
+
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data)
+      });
+
+      document.getElementById('saveMsg').textContent = response.ok
+        ? 'Settings saved.'
+        : 'Could not save settings.';
+    }
+
+    async function createAccount() {
+      const message = document.getElementById('accountMsg');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const studentId = document.getElementById('student_id').value;
+
+      message.textContent = 'Creating account…';
+
+      try {
+        const response = await fetch('/api/student-account/create', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            student_id: studentId,
+            username,
+            password
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          message.textContent = result.error || 'Could not create account.';
+          return;
         }
 
-        function escapeHtml(value) {
-            return String(value || '').replace(/[&<>"']/g, function (character) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[character];
-            });
-        }
+        message.textContent =
+          'Account created. Give the student their username and initial password.';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+      } catch (error) {
+        message.textContent = 'Could not connect to the server.';
+      }
+    }
 
-        async function saveSettings() {
-            const settings = {};
-
-            [
-                'gps_enabled',
-                'geofence_radius_m',
-                'school_latitude',
-                'school_longitude',
-                'late_after',
-                'attendance_deadline',
-                'absence_threshold',
-                'qr_start',
-                'qr_end'
-            ].forEach(function (key) {
-                settings[key] = document.getElementById(key).value;
-            });
-
-            settings.qr_enabled =
-                document.getElementById('qr_enabled').checked ? '1' : '0';
-            settings.sms_enabled =
-                document.getElementById('sms_enabled').checked ? '1' : '0';
-
-            const response = await fetch('/api/settings', {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify(settings)
-            });
-
-            showMessage(
-                'settingsMessage',
-                response.ok ? 'Settings saved.' : 'Could not save settings.'
-            );
-        }
-
-        function useCurrentLocation() {
-            if (!navigator.geolocation) {
-                showMessage('settingsMessage', 'Location is not available in this browser.');
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    document.getElementById('school_latitude').value =
-                        position.coords.latitude;
-                    document.getElementById('school_longitude').value =
-                        position.coords.longitude;
-                    showMessage('settingsMessage', 'School location filled in.');
-                },
-                function () {
-                    showMessage('settingsMessage', 'Allow location access to set the school center.');
-                },
-                { enableHighAccuracy: true, timeout: 15000 }
-            );
-        }
-
-        function loadContact() {
-            const selectedId =
-                document.getElementById('contact_student_id').value;
-            const student = students.find(function (item) {
-                return String(item.id) === String(selectedId);
-            });
-
-            document.getElementById('student_phone').value =
-                student ? student.student_phone || '' : '';
-            document.getElementById('guardian_contact').value =
-                student ? student.guardian_contact || '' : '';
-        }
-
-        async function saveContact() {
-            const studentId =
-                document.getElementById('contact_student_id').value;
-            const student = students.find(function (item) {
-                return String(item.id) === String(studentId);
-            });
-
-            if (!student) {
-                showMessage('contactMessage', 'Select a student first.');
-                return;
-            }
-
-            const response = await fetch('/api/students/' + student.id, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify({
-                    full_name: student.full_name,
-                    sex: student.sex,
-                    lrn: student.lrn,
-                    guardian_name: student.guardian_name,
-                    guardian_contact:
-                        document.getElementById('guardian_contact').value,
-                    student_phone:
-                        document.getElementById('student_phone').value,
-                    email: student.email
-                })
-            });
-
-            showMessage(
-                'contactMessage',
-                response.ok ? 'Contact numbers saved.' : 'Could not save contact numbers.'
-            );
-
-            if (response.ok) {
-                student.student_phone =
-                    document.getElementById('student_phone').value;
-                student.guardian_contact =
-                    document.getElementById('guardian_contact').value;
-            }
-        }
-
-        async function createStudentAccount() {
-            const studentId =
-                document.getElementById('account_student_id').value;
-            const username =
-                document.getElementById('student_username').value.trim();
-            const password =
-                document.getElementById('student_password').value;
-
-            const response = await fetch('/api/student-account/create', {
-                method: 'POST',
-                headers: headers(),
-                body: JSON.stringify({
-                    student_id: studentId,
-                    username: username,
-                    password: password
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                showMessage('accountMessage', result.error || 'Could not create account.');
-                return;
-            }
-
-            showMessage(
-                'accountMessage',
-                'Account created for ' + result.username + '. Give the student their username and password.'
-            );
-
-            document.getElementById('student_username').value = '';
-            document.getElementById('student_password').value = '';
-        }
-
-        loadPage();
-    </script>
+    load();
+  </script>
 </body>
 </html>
