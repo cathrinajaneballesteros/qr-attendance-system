@@ -35,7 +35,7 @@
       <div class="section-info">Grade 6 - Great Geniuses | S.Y. 2026-2027</div>
     </div>
 
-    <div class="error-msg" id="errorMsg" role="alert" aria-live="polite" hidden></div>
+    <div id="errorMsg" class="error-msg" role="alert" aria-live="polite" hidden></div>
 
     <form id="loginForm" autocomplete="off">
       <div class="form-group">
@@ -43,8 +43,8 @@
         <input
           type="text"
           id="username"
-          name="username"
-          autocomplete="username"
+          name="student_login_user"
+          autocomplete="off"
           required
         >
       </div>
@@ -54,8 +54,8 @@
         <input
           type="password"
           id="password"
-          name="password"
-          autocomplete="current-password"
+          name="student_login_password"
+          autocomplete="new-password"
           required
         >
       </div>
@@ -65,19 +65,13 @@
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
-    const errorBox = document.getElementById('errorMsg');
+    const loginForm = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
     const loginButton = document.getElementById('loginButton');
 
-    function showError(message) {
-      errorBox.textContent = message;
-      errorBox.hidden = false;
-    }
-
-    form.addEventListener('submit', async function(event) {
+    loginForm.addEventListener('submit', async function(event) {
       event.preventDefault();
-
-      errorBox.hidden = true;
+      errorMsg.hidden = true;
 
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
@@ -106,8 +100,8 @@
 
         if (data.user.role === 'student' && !data.user.student_id) {
           showError(
-            'Login was accepted, but this account is not linked to a student record. ' +
-            'Ask the teacher to recreate the student account from Attendance Settings.'
+            'This student account is not linked to a student record. ' +
+            'Ask the teacher to recreate the account in Attendance Settings.'
           );
           return;
         }
@@ -115,15 +109,15 @@
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        if (data.user.role === 'admin') {
-          location.href = 'admin-dashboard.html';
-        } else if (data.user.role === 'student') {
-          location.href = 'student-portal.html';
+        if (data.user.role === 'student') {
+          window.location.replace('student-portal.html');
+        } else if (data.user.role === 'admin') {
+          window.location.replace('admin-dashboard.html');
         } else if (data.user.role === 'teacher') {
-          location.href = 'dashboard.html';
+          window.location.replace('dashboard.html');
         } else {
           localStorage.clear();
-          showError('This account has an unrecognized role. Contact the administrator.');
+          showError('This account has an unrecognized role.');
         }
       } catch (error) {
         showError('Could not connect to the server. Please try again.');
@@ -132,6 +126,11 @@
         loginButton.textContent = 'Sign In';
       }
     });
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.hidden = false;
+    }
   </script>
 </body>
 </html>
