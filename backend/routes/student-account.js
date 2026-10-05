@@ -10,7 +10,7 @@ router.post('/create', auth, (req, res) => {
 
   const db = req.app.get('db');
   const studentId = Number(req.body.student_id);
-  const username = String(req.body.username || '').trim();
+  const username = String(req.body.username || req.body.email || '').trim();
   const password = String(req.body.password || '');
 
   if (!studentId || !username || !password) {
@@ -39,34 +39,37 @@ router.post('/create', auth, (req, res) => {
     return res.status(404).json({ error: 'Student not found' });
   }
 
-  if (db.prepare('SELECT id FROM users WHERE username = ?').get(username)) {
-    return res.status(409).json({ error: 'That username is already in use' });
-  }
-
-  const existingAccount = db.prepare(
+  const existingStudentAccount = db.prepare(
     "SELECT id FROM users WHERE student_id = ? AND role = 'student'"
   ).get(studentId);
 
-  if (existingAccount) {
-    return res.status(409).json({
-      error: 'This student already has an account'
+  const usernameOwner = db.prepare(
+    'SELECT id FROM users WHERE username = ?'
+  ).get(username);
+
+  if (usernameOwner &&
+      (!existingStudentAccount || usernameOwner.id !== existingStudentAccount.id)) {
+    return res.status(409).json({ error: 'That username is already in use' });
+  }
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  if (existingStudentAccount) {
+    db.prepare(
+      'UPDATE users SET full_name = ?, username = ?, email = NULL, password = ? WHERE id = ?'
+    ).run(student.full_name, username, hashedPassword, existingStudentAccount.id);
+
+    return res.json({
+      message: 'Student account credentials updated'
     });
   }
 
-  const result = db.prepare(
+  db.prepare(
     "INSERT INTO users (full_name, username, email, password, role, student_id) " +
     "VALUES (?, ?, NULL, ?, 'student', ?)"
-  ).run(
-    student.full_name,
-    username,
-    bcrypt.hashSync(password, 10),
-    studentId
-  );
+  ).run(student.full_name, username, hashedPassword, studentId);
 
-  res.status(201).json({
-    id: result.lastInsertRowid,
-    message: 'Student account created'
-  });
+  res.status(201).json({ message: 'Student account created' });
 });
 
 router.get('/me', auth, (req, res) => {
@@ -75,10 +78,8 @@ router.get('/me', auth, (req, res) => {
   }
 
   const db = req.app.get('db');
-
   const student = db.prepare(
-    'SELECT id, full_name, sex, qr_code, student_phone ' +
-    'FROM students WHERE id = ?'
+    'SELECT id, full_name, sex, qr_code, student_phone FROM students WHERE id = ?'
   ).get(req.user.student_id);
 
   if (!student) {
