@@ -1,132 +1,137 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QR Attendance System - Login</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%); padding: 20px; }
-        .login-card { background: white; border-radius: 20px; padding: 40px 35px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(136,14,79,0.15); }
-        .login-header { text-align: center; margin-bottom: 30px; }
-        .login-header h1 { font-size: 1.8em; margin-bottom: 5px; }
-        .login-header h1 span.qr { color: #880e4f; }
-        .login-header h1 span.attend { color: #e91e63; }
-        .login-header p { color: #888; font-size: 0.8em; margin-top: 5px; }
-        .login-header .school-name { color: #880e4f; font-weight: bold; font-size: 0.85em; margin-top: 8px; }
-        .login-header .section-info { color: #999; font-size: 0.75em; }
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; color: #666; font-size: 0.8em; margin-bottom: 6px; font-weight: 600; }
-        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid #fce4ec; border-radius: 10px; font-size: 0.95em; background: #fff5f7; color: #333; transition: border-color 0.3s; }
-        .form-group input:focus { border-color: #e91e63; outline: none; background: white; }
-        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #880e4f, #ad1457); color: white; border: none; border-radius: 10px; font-size: 1em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(136,14,79,0.3); }
-        .error-msg { background: #ffebee; color: #c62828; padding: 10px 15px; border-radius: 8px; font-size: 0.8em; margin-bottom: 15px; display: none; border: 1px solid #ffcdd2; text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Attendance System - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fce4ec 0%,#f8bbd0 50%,#f48fb1 100%);padding:20px}
+    .login-card{background:#fff;border-radius:20px;padding:40px 35px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(136,14,79,.15)}
+    .login-header{text-align:center;margin-bottom:30px}
+    .login-header h1{font-size:1.8em;margin-bottom:5px}
+    .login-header h1 span.qr{color:#880e4f}
+    .login-header h1 span.attend{color:#e91e63}
+    .login-header p{color:#888;font-size:.8em;margin-top:5px}
+    .login-header .school-name{color:#880e4f;font-weight:bold;font-size:.85em;margin-top:8px}
+    .login-header .section-info{color:#999;font-size:.75em}
+    .form-group{margin-bottom:18px}
+    .form-group label{display:block;color:#666;font-size:.8em;margin-bottom:6px;font-weight:600}
+    .form-group input{width:100%;padding:12px 16px;border:2px solid #fce4ec;border-radius:10px;font-size:.95em;background:#fff5f7;color:#333}
+    .form-group input:focus{border-color:#e91e63;outline:none;background:#fff}
+    .btn-login{width:100%;padding:14px;background:linear-gradient(135deg,#880e4f,#ad1457);color:#fff;border:0;border-radius:10px;font-size:1em;font-weight:bold;cursor:pointer}
+    .btn-login:disabled{opacity:.65;cursor:wait}
+    .error-msg{background:#ffebee;color:#b71c1c;padding:10px 15px;border-radius:8px;font-size:.85em;margin-bottom:15px;border:1px solid #ffcdd2;text-align:center}
+    .error-msg[hidden]{display:none}
+  </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="login-header">
-            <h1><span class="qr">QR</span><span class="attend">Attend</span></h1>
-            <p>QR Attendance System with Parent Notification</p>
-            <div class="school-name">Sta. Rosa Elementary School</div>
-            <div class="section-info">Grade 6 - Great Geniuses | S.Y. 2026-2027</div>
-        </div>
-        <div class="error-msg" id="errorMsg"></div>
-        <form id="loginForm" autocomplete="off">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" name="login_user_x" autocomplete="off" value="">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" name="login_pass_x" autocomplete="new-password" value="">
-            </div>
-        </form>
-        <button class="btn-login" onclick="login()">Sign In</button>
+  <div class="login-card">
+    <div class="login-header">
+      <h1><span class="qr">QR</span><span class="attend">Attend</span></h1>
+      <p>QR Attendance System with Parent Notification</p>
+      <div class="school-name">Sta. Rosa Elementary School</div>
+      <div class="section-info">Grade 6 - Great Geniuses | S.Y. 2026-2027</div>
     </div>
-    <script>
-        /* Clear input fields */
-        window.addEventListener('load', function() {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
+
+    <div class="error-msg" id="errorMsg" role="alert" aria-live="polite" hidden></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          autocomplete="username"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button class="btn-login" id="loginButton" type="submit">Sign In</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorBox = document.getElementById('errorMsg');
+    const loginButton = document.getElementById('loginButton');
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+    }
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      errorBox.hidden = true;
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('Enter your username and password.');
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = 'Signing in…';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         });
-        setTimeout(function() {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-        }, 200);
 
-        /* Check if already logged in - verify token with backend first */
-        var existingToken = localStorage.getItem('token');
-        if (existingToken) {
-            fetch('/api/auth/users', { headers: { 'Authorization': 'Bearer ' + existingToken } })
-            .then(function(res) {
-                if (res.ok) {
-                    /* Token is valid - redirect based on role */
-                    var userData = null;
-                    try { userData = JSON.parse(localStorage.getItem('user') || '{}'); } catch(e) {}
-                    if (userData && userData.role === 'admin') {
-                        window.location.href = 'admin-dashboard.html';
-                    } else if (userData && userData.role === 'student') { window.location.href = 'student-portal.html'; } else if (userData && userData.role === 'teacher') {
-                        window.location.href = 'dashboard.html';
-                    }
-                } else {
-                    /* Token is expired or invalid - clear everything */
-                    localStorage.clear();
-                }
-            })
-            .catch(function() {
-                /* Server not reachable - clear tokens */
-                localStorage.clear();
-            });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.token || !data.user) {
+          showError(data.error || 'Login failed. Check your username and password.');
+          return;
         }
 
-        document.getElementById('password').addEventListener('keypress', function(e) { if (e.key === 'Enter') login(); });
-        document.getElementById('username').addEventListener('keypress', function(e) { if (e.key === 'Enter') login(); });
-
-        async function login() {
-            var username = document.getElementById('username').value.trim();
-            var password = document.getElementById('password').value;
-            var errorMsg = document.getElementById('errorMsg');
-            errorMsg.style.display = 'none';
-
-            if (!username || !password) {
-                errorMsg.textContent = 'Please enter both username and password.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            try {
-                var response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username, password: password })
-                });
-                var data = await response.json();
-                if (response.ok && data.token) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-
-                    /* Redirect based on role */
-                    if (data.user && data.user.role === 'admin') {
-                        window.location.href = 'admin-dashboard.html';
-                    } else if (data.user && data.user.role === 'student') {
-                        window.location.href = 'student-portal.html';
-                    } else {
-                        window.location.href = 'dashboard.html';
-                    }
-                } else {
-                    errorMsg.textContent = data.error || 'Invalid username or password.';
-                    errorMsg.style.display = 'block';
-                }
-            } catch (err) {
-                errorMsg.textContent = 'Connection error. Is the server running?';
-                errorMsg.style.display = 'block';
-            }
+        if (data.user.role === 'student' && !data.user.student_id) {
+          showError(
+            'Login was accepted, but this account is not linked to a student record. ' +
+            'Ask the teacher to recreate the student account from Attendance Settings.'
+          );
+          return;
         }
-    </script>
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        if (data.user.role === 'admin') {
+          location.href = 'admin-dashboard.html';
+        } else if (data.user.role === 'student') {
+          location.href = 'student-portal.html';
+        } else if (data.user.role === 'teacher') {
+          location.href = 'dashboard.html';
+        } else {
+          localStorage.clear();
+          showError('This account has an unrecognized role. Contact the administrator.');
+        }
+      } catch (error) {
+        showError('Could not connect to the server. Please try again.');
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Sign In';
+      }
+    });
+  </script>
 </body>
 </html>
-
