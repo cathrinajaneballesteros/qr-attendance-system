@@ -6,144 +6,271 @@
   <title>Student Attendance</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    main{max-width:820px;margin:32px auto;padding:20px}
+    main{max-width:900px;margin:28px auto;padding:20px}
     .panel{background:#fff;padding:22px;margin:16px 0;border-radius:12px;box-shadow:0 2px 10px #0001}
-    button{padding:12px 20px}
-    .msg{margin-left:10px}
+    .summary{display:flex;gap:18px;flex-wrap:wrap}
+    .summary-card{flex:1;min-width:220px;background:#fff5f8;padding:18px;border-radius:12px}
+    .summary-card strong{display:block;margin-top:8px;font-size:1.2em;color:#880e4f}
+    button{padding:11px 18px;border:0;border-radius:8px;cursor:pointer}
     label{display:block;margin:12px 0 5px}
     input{display:block;width:100%;max-width:420px;padding:10px;box-sizing:border-box}
+    .message{margin-top:12px;padding:10px;border-radius:8px}
+    .success{background:#e8f5e9;color:#1b5e20}
+    .error{background:#ffebee;color:#b71c1c}
+    .muted{color:#666}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #eee}
+    .status{font-weight:bold;text-transform:capitalize}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
   </style>
 </head>
 <body>
   <main>
-    <h1>Student Attendance</h1>
+    <h1>My Attendance</h1>
+    <p class="muted">Welcome, <strong id="studentName">Loading…</strong></p>
 
-    <section class="panel">
-      <h2 id="name">Loading…</h2>
-      <p>Use the button below to record your attendance. Allow location access when asked for onsite check-in.</p>
-      <button type="button" onclick="checkIn()">Record my attendance</button>
-      <span id="msg" class="msg"></span>
+    <section class="summary">
+      <div class="summary-card">
+        Username
+        <strong id="studentUsername">—</strong>
+      </div>
+      <div class="summary-card">
+        Today's attendance
+        <strong id="todayStatus">Checking…</strong>
+      </div>
     </section>
 
     <section class="panel">
-      <h2>Recent attendance</h2>
-      <table>
-        <thead>
-          <tr><th>Date</th><th>Time</th><th>Status</th></tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
+      <h2>Record today's attendance</h2>
+      <p class="muted">
+        If GPS check-in is enabled for onsite attendance, allow location access when your browser asks.
+      </p>
+      <button type="button" onclick="checkIn()">I am present — record attendance</button>
+      <div id="attendanceMessage" class="message" role="status" aria-live="polite" hidden></div>
+    </section>
+
+    <section class="panel">
+      <h2>Attendance history</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyRows">
+            <tr><td colspan="3">Loading attendance history…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="panel">
       <h2>Change password</h2>
-      <p>Enter your current password and choose a new password with at least 8 characters.</p>
+      <p class="muted">Your password is private and will not be displayed on this page.</p>
 
       <form id="passwordForm" onsubmit="changePassword(event)">
         <label for="currentPassword">Current password</label>
-        <input id="currentPassword" type="password"
-               autocomplete="current-password" required>
+        <input id="currentPassword" type="password" autocomplete="current-password" required>
 
         <label for="newPassword">New password</label>
-        <input id="newPassword" type="password" minlength="8"
-               autocomplete="new-password" required>
+        <input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
 
         <label for="confirmPassword">Confirm new password</label>
-        <input id="confirmPassword" type="password" minlength="8"
-               autocomplete="new-password" required>
+        <input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required>
 
         <button type="submit">Change password</button>
-        <span id="passwordMsg" class="msg" role="status"></span>
+        <div id="passwordMessage" class="message" role="status" aria-live="polite" hidden></div>
       </form>
     </section>
 
-    <button type="button" onclick="logout()">Sign out</button>
+    <div class="actions">
+      <button type="button" onclick="logout()">Sign out</button>
+    </div>
   </main>
 
   <script>
     const token = localStorage.getItem('token');
+    let attendanceRecords = [];
 
     if (!token) {
       location.href = 'index.html';
     }
+
+    let storedUser = {};
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    } catch (error) {
+      storedUser = {};
+    }
+
+    document.getElementById('studentUsername').textContent =
+      storedUser.username || '—';
 
     const headers = {
       'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json'
     };
 
-    async function load() {
-      const response = await fetch('/api/student-account/me', { headers });
+    function manilaDateKey() {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).formatToParts(new Date());
 
-      if (!response.ok) {
-        logout();
+      const values = {};
+      parts.forEach(part => values[part.type] = part.value);
+      return values.year + '-' + values.month + '-' + values.day;
+    }
+
+    function showMessage(elementId, message, isError) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.hidden = false;
+      element.className = 'message ' + (isError ? 'error' : 'success');
+    }
+
+    function updateTodayStatus() {
+      const today = manilaDateKey();
+      const record = attendanceRecords.find(item => item.date === today);
+
+      document.getElementById('todayStatus').textContent = record
+        ? record.status + (record.time_in ? ' at ' + record.time_in : '')
+        : 'Not recorded yet';
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('historyRows');
+      tbody.replaceChildren();
+
+      if (!attendanceRecords.length) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        cell.textContent = 'No attendance records yet.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
         return;
       }
 
-      const data = await response.json();
-      document.getElementById('name').textContent = data.student.full_name;
+      attendanceRecords.forEach(record => {
+        const row = document.createElement('tr');
 
-      document.getElementById('rows').innerHTML =
-        data.records.map(record =>
-          `<tr><td>${record.date}</td><td>${record.time_in || ''}</td><td>${record.status}</td></tr>`
-        ).join('') || '<tr><td colspan="3">No records yet</td></tr>';
-    }
-
-    async function checkIn() {
-      const message = document.getElementById('msg');
-      message.textContent = 'Getting location…';
-
-      const settingsResponse = await fetch('/api/settings', { headers });
-      const settings = await settingsResponse.json();
-
-      const sendAttendance = async coordinates => {
-        const response = await fetch('/api/attendance/self', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(coordinates || {})
+        [record.date || '', record.time_in || '', record.status || ''].forEach(value => {
+          const cell = document.createElement('td');
+          cell.textContent = value;
+          row.appendChild(cell);
         });
 
-        const data = await response.json();
+        row.lastChild.className = 'status';
+        tbody.appendChild(row);
+      });
+    }
 
-        message.textContent = response.ok
-          ? (data.duplicate
-              ? 'Already recorded today at ' + data.time_in
-              : 'Attendance recorded at ' + data.time_in + ' (' + data.status + ')')
-          : (data.error || 'Could not record attendance');
+    async function loadPortal() {
+      try {
+        const response = await fetch('/api/student-account/me', { headers });
 
-        if (response.ok) load();
-      };
-
-      if (settings.gps_enabled === '1') {
-        if (!navigator.geolocation) {
-          message.textContent = 'This browser does not support location access.';
+        if (!response.ok) {
+          logout();
           return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-          position => sendAttendance({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          }),
-          () => {
-            message.textContent = 'Location permission is required for onsite check-in.';
-          },
-          { enableHighAccuracy: true, timeout: 15000 }
-        );
-      } else {
-        sendAttendance({});
+        const data = await response.json();
+
+        document.getElementById('studentName').textContent =
+          data.student && data.student.full_name
+            ? data.student.full_name
+            : 'Student';
+
+        attendanceRecords = Array.isArray(data.records) ? data.records : [];
+        renderHistory();
+        updateTodayStatus();
+      } catch (error) {
+        document.getElementById('studentName').textContent = 'Could not load account';
+        document.getElementById('historyRows').innerHTML =
+          '<tr><td colspan="3">Could not load attendance history. Refresh the page to try again.</td></tr>';
+      }
+    }
+
+    async function checkIn() {
+      const button = document.querySelector('button[onclick="checkIn()"]');
+      button.disabled = true;
+      button.textContent = 'Recording…';
+
+      try {
+        const settingsResponse = await fetch('/api/settings', { headers });
+
+        if (!settingsResponse.ok) {
+          showMessage('attendanceMessage', 'Could not load attendance settings.', true);
+          return;
+        }
+
+        const settings = await settingsResponse.json();
+
+        const submitAttendance = async coordinates => {
+          const response = await fetch('/api/attendance/self', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(coordinates || {})
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            showMessage('attendanceMessage', result.error || 'Attendance could not be recorded.', true);
+            return;
+          }
+
+          const message = result.duplicate
+            ? 'Your attendance was already recorded today at ' + (result.time_in || '') + '.'
+            : 'You are marked ' + (result.status || 'present') +
+              (result.time_in ? ' at ' + result.time_in : '') + '.';
+
+          showMessage('attendanceMessage', message, false);
+          await loadPortal();
+        };
+
+        if (settings.gps_enabled === '1') {
+          if (!navigator.geolocation) {
+            showMessage('attendanceMessage', 'This browser does not support GPS check-in.', true);
+            return;
+          }
+
+          navigator.geolocation.getCurrentPosition(
+            position => submitAttendance({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }),
+            () => showMessage(
+              'attendanceMessage',
+              'Location access is needed for onsite attendance. Allow location access and try again.',
+              true
+            ),
+            { enableHighAccuracy: true, timeout: 15000 }
+          );
+        } else {
+          await submitAttendance({});
+        }
+      } catch (error) {
+        showMessage('attendanceMessage', 'Could not connect to the attendance service.', true);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'I am present — record attendance';
       }
     }
 
     async function changePassword(event) {
       event.preventDefault();
 
-      const message = document.getElementById('passwordMsg');
       const currentPassword = document.getElementById('currentPassword').value;
       const newPassword = document.getElementById('newPassword').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-
-      message.textContent = 'Updating password…';
 
       try {
         const response = await fetch('/api/student-account/change-password', {
@@ -159,14 +286,14 @@
         const result = await response.json();
 
         if (!response.ok) {
-          message.textContent = result.error || 'Could not change password.';
+          showMessage('passwordMessage', result.error || 'Could not change password.', true);
           return;
         }
 
         document.getElementById('passwordForm').reset();
-        message.textContent = 'Password changed successfully.';
+        showMessage('passwordMessage', 'Password changed successfully.', false);
       } catch (error) {
-        message.textContent = 'Could not connect to the server.';
+        showMessage('passwordMessage', 'Could not connect to the server.', true);
       }
     }
 
@@ -175,7 +302,7 @@
       location.href = 'index.html';
     }
 
-    load();
+    loadPortal();
   </script>
 </body>
 </html>
