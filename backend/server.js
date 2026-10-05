@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -18,9 +19,29 @@ app.set('JWT_SECRET', JWT_SECRET);
 app.use(cors());
 app.use(express.json());
 
-const frontendPath = path.join(__dirname, '..', 'frontend');
+const frontendCandidates = [
+  path.resolve(__dirname, '..', 'frontend'),
+  path.resolve(__dirname, 'frontend'),
+  path.resolve(process.cwd(), 'frontend'),
+  path.resolve(process.cwd(), '..', 'frontend')
+];
 
-// Keep every existing API route.
+const frontendPath =
+  frontendCandidates.find(folder =>
+    fs.existsSync(path.join(folder, 'index.html')) &&
+    fs.existsSync(path.join(folder, 'student-portal.html'))
+  ) ||
+  frontendCandidates.find(folder =>
+    fs.existsSync(path.join(folder, 'index.html'))
+  ) ||
+  frontendCandidates[0];
+
+console.log('Frontend directory:', frontendPath);
+console.log(
+  'Student portal file found:',
+  fs.existsSync(path.join(frontendPath, 'student-portal.html'))
+);
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/attendance', require('./routes/attendance'));
@@ -33,18 +54,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Serve this exact file at this URL. Do not replace it with index.html.
 app.get('/student-portal.html', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.sendFile(path.join(frontendPath, 'student-portal.html'), error => {
-    if (error && !res.headersSent) {
-      console.error('Student portal file could not be served:', error.message);
-      res.status(404).send('student-portal.html was not found in the frontend folder.');
-    }
-  });
+
+  const portalFile = path.join(frontendPath, 'student-portal.html');
+
+  if (!fs.existsSync(portalFile)) {
+    console.error('Student portal file not found at:', portalFile);
+    return res.status(404).send(
+      'Student portal file not found. Check the Render log for the frontend directory.'
+    );
+  }
+
+  res.sendFile(portalFile);
 });
 
-// Serve the remaining frontend files, including CSS and JavaScript.
 app.use(express.static(frontendPath, {
   setHeaders(res, filePath) {
     if (path.extname(filePath).toLowerCase() === '.html') {
@@ -57,12 +81,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Do not send the login page as the response for a missing API route.
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Preserve the existing fallback for other site routes.
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
