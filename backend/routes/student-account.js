@@ -39,7 +39,7 @@ router.post('/create', auth, (req, res) => {
     return res.status(404).json({ error: 'Student not found' });
   }
 
-  const existingStudentAccount = db.prepare(
+  const existingAccount = db.prepare(
     "SELECT id FROM users WHERE student_id = ? AND role = 'student'"
   ).get(studentId);
 
@@ -48,28 +48,37 @@ router.post('/create', auth, (req, res) => {
   ).get(username);
 
   if (usernameOwner &&
-      (!existingStudentAccount || usernameOwner.id !== existingStudentAccount.id)) {
+      (!existingAccount || usernameOwner.id !== existingAccount.id)) {
     return res.status(409).json({ error: 'That username is already in use' });
   }
 
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const passwordHash = bcrypt.hashSync(password, 10);
 
-  if (existingStudentAccount) {
+  if (existingAccount) {
     db.prepare(
       'UPDATE users SET full_name = ?, username = ?, email = NULL, password = ? WHERE id = ?'
-    ).run(student.full_name, username, hashedPassword, existingStudentAccount.id);
+    ).run(student.full_name, username, passwordHash, existingAccount.id);
+  } else {
+    db.prepare(
+      "INSERT INTO users (full_name, username, email, password, role, student_id) " +
+      "VALUES (?, ?, NULL, ?, 'student', ?)"
+    ).run(student.full_name, username, passwordHash, studentId);
+  }
 
-    return res.json({
-      message: 'Student account credentials updated'
+  // The database wrapper can suppress SQL errors, so verify the saved account.
+  const savedAccount = db.prepare(
+    "SELECT username, password FROM users WHERE student_id = ? AND role = 'student'"
+  ).get(studentId);
+
+  if (!savedAccount ||
+      savedAccount.username !== username ||
+      !bcrypt.compareSync(password, savedAccount.password)) {
+    return res.status(500).json({
+      error: 'The account could not be verified in the database. Check the Render service logs.'
     });
   }
 
-  db.prepare(
-    "INSERT INTO users (full_name, username, email, password, role, student_id) " +
-    "VALUES (?, ?, NULL, ?, 'student', ?)"
-  ).run(student.full_name, username, hashedPassword, studentId);
-
-  res.status(201).json({ message: 'Student account created' });
+  res.json({ message: 'Student account created and verified' });
 });
 
 router.get('/me', auth, (req, res) => {
@@ -117,12 +126,6 @@ router.post('/change-password', auth, (req, res) => {
     return res.status(400).json({ error: 'New passwords do not match' });
   }
 
-  if (currentPassword === newPassword) {
-    return res.status(400).json({
-      error: 'Choose a password different from your current password'
-    });
-  }
-
   const db = req.app.get('db');
   const user = db.prepare(
     "SELECT id, password FROM users WHERE id = ? AND role = 'student'"
@@ -132,10 +135,14 @@ router.post('/change-password', auth, (req, res) => {
     return res.status(401).json({ error: 'Current password is incorrect' });
   }
 
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(
-    bcrypt.hashSync(newPassword, 10),
-    user.id
-  );
+  const newHash = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(newHash, user.id);
+
+  const saved = db.prepare('SELECT password FROM users WHERE id = ?').get(user.id);
+
+  if (!saved || !bcrypt.compareSync(newPassword, saved.password)) {
+    return res.status(500).json({ error: 'Could not verify the changed password' });
+  }
 
   res.json({ message: 'Password changed successfully' });
 });
